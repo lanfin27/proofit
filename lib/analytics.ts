@@ -1,11 +1,25 @@
 type EventProperties = Record<string, string | number | boolean>
 
-const handlers: Array<(eventName: string, properties?: EventProperties) => void> = []
-
-export function trackEvent(eventName: string, properties?: EventProperties) {
-  handlers.forEach((handler) => handler(eventName, properties))
+// GA4 이벤트 전송
+export function sendGAEvent(
+  eventName: string,
+  params?: EventProperties
+) {
+  if (typeof window !== 'undefined' && window.gtag) {
+    window.gtag('event', eventName, params)
+  }
 }
 
-export function registerHandler(handler: (eventName: string, properties?: EventProperties) => void) {
-  handlers.push(handler)
+// 기존 trackEvent는 sendGAEvent로 위임
+export function trackEvent(
+  eventName: string,
+  properties?: EventProperties
+) {
+  sendGAEvent(eventName, properties)
+}
+
+declare global {
+  interface Window {
+    gtag: (...args: unknown[]) => void
+  }
 }

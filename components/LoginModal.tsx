@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useCallback } from 'react'
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client'
-import { trackEvent } from '@/lib/analytics'
+import { trackEvent, sendGAEvent } from '@/lib/analytics'
 import { useToast } from '@/components/Toast'
 
 interface LoginModalProps {
@@ -36,6 +36,7 @@ export default function LoginModal({ isOpen, onClose, redirectAfter }: LoginModa
   if (!isOpen) return null
 
   const handleLogin = async (provider: 'kakao' | 'google') => {
+    sendGAEvent('login_click', { provider })
     trackEvent('login_modal_open', { trigger: provider })
 
     if (!isSupabaseConfigured()) {

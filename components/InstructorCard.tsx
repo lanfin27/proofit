@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { InstructorSummary } from '@/lib/types'
 import { useLoginModal } from '@/components/LoginModalProvider'
 import CyclingBadge from '@/components/CyclingBadge'
+import { sendGAEvent } from '@/lib/analytics'
 
 interface InstructorCardProps {
   instructor: InstructorSummary
@@ -60,6 +61,10 @@ export default function InstructorCard({
   const cardClass = `block ${cardBg} rounded-2xl p-5 transition-colors duration-150`
 
   const handleClick = (e: React.MouseEvent) => {
+    sendGAEvent('instructor_card_click', {
+      instructor_name: instructor.display_name,
+      category: instructor.categories[0] ?? '',
+    })
     if (requireLoginOnClick && !isLoggedIn) {
       e.preventDefault()
       openLoginModal(href)

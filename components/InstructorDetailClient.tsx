@@ -5,7 +5,7 @@ import { InstructorSummary, Course } from '@/lib/types'
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client'
 import VerifyButton from '@/components/VerifyButton'
 import InstructorApplicationModal from '@/components/InstructorApplicationModal'
-import { trackEvent } from '@/lib/analytics'
+import { trackEvent, sendGAEvent } from '@/lib/analytics'
 import { CONTACT_EMAIL } from '@/lib/constants'
 
 interface Props {
@@ -50,12 +50,16 @@ export default function InstructorDetailClient({ instructor, courses }: Props) {
   const [isAppModalOpen, setIsAppModalOpen] = useState(false)
 
   useEffect(() => {
+    sendGAEvent('instructor_detail_view', {
+      instructor_name: instructor.display_name,
+      category: instructor.categories[0] ?? '',
+    })
     if (!isSupabaseConfigured()) return
     const supabase = createClient()
     supabase.auth.getUser().then(({ data: { user } }) => {
       setIsLoggedIn(!!user)
     })
-  }, [])
+  }, [instructor.display_name, instructor.categories])
 
   const channelLinks: { label: string; url: string; icon: React.ReactNode }[] = []
 

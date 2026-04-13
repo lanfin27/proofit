@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useMemo, useRef, useState, useEffect } from 'react'
 import { SORT_OPTIONS } from '@/lib/constants'
-import { trackEvent } from '@/lib/analytics'
+import { trackEvent, sendGAEvent } from '@/lib/analytics'
 
 interface FilterBarProps {
   mainCategories: string[]
@@ -108,6 +108,7 @@ export default function FilterBar({
       }
       // 세부 카테고리 초기화
       params.delete('category')
+      sendGAEvent('category_select', { category: mc })
       trackEvent('filter_change', { mainCategory: mc })
       router.push(`/instructors?${params.toString()}`, { scroll: false })
       // 스크롤 리셋
@@ -120,9 +121,13 @@ export default function FilterBar({
 
   const handleCategoryClick = useCallback(
     (cat: string) => {
+      sendGAEvent('subcategory_select', {
+        category: currentMainCategory,
+        subcategory: cat,
+      })
       updateParams('category', cat)
     },
-    [updateParams]
+    [updateParams, currentMainCategory]
   )
 
   const hasOverflow =

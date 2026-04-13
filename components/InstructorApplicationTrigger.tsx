@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import InstructorApplicationModal from '@/components/InstructorApplicationModal'
+import { sendGAEvent } from '@/lib/analytics'
 
 /**
  * "수익확인 신청하기" 버튼 + 모달 — 강사용 CTA.
@@ -18,14 +19,14 @@ export default function InstructorApplicationTrigger({
     <>
       {variant === 'button' ? (
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => { sendGAEvent('instructor_apply_modal_open'); setIsModalOpen(true) }}
           className="shrink-0 inline-flex items-center justify-center px-6 py-3 bg-[#191F28] text-white text-sm font-semibold rounded-xl hover:bg-[#333D4B] transition-colors duration-150 focus:outline-none"
         >
           확인 신청하기 →
         </button>
       ) : (
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => { sendGAEvent('instructor_apply_modal_open'); setIsModalOpen(true) }}
           className="inline-flex items-center justify-center px-6 py-3 bg-[#191F28] text-white text-sm font-semibold rounded-xl hover:bg-[#333D4B] transition-colors duration-150 focus:outline-none"
         >
           수익확인 신청하기 →

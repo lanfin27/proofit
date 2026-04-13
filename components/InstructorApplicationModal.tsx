@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client'
 import { useToast } from '@/components/Toast'
+import { sendGAEvent } from '@/lib/analytics'
 
 interface InstructorApplicationModalProps {
   isOpen: boolean
@@ -115,6 +116,7 @@ export default function InstructorApplicationModal({
       return
     }
 
+    sendGAEvent('instructor_apply_submit')
     showToast('신청이 완료되었습니다. 확인 후 연락드리겠습니다.', 'success')
     onClose()
   }
