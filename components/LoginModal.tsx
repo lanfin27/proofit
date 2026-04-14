@@ -50,7 +50,10 @@ export default function LoginModal({ isOpen, onClose, redirectAfter }: LoginModa
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
-        options: { redirectTo },
+        options: {
+          redirectTo,
+          ...(provider === 'kakao' && { scopes: 'talk_message' }),
+        },
       })
 
       if (error) {
