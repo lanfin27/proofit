@@ -1,5 +1,9 @@
 import { createClient as createServerClient } from '@supabase/supabase-js'
 
+// 항상 최신 유저 목록을 가져오도록 캐싱 비활성화
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 interface AuthUser {
   id: string
   email: string | null
@@ -31,7 +35,10 @@ async function getUsers(): Promise<{ users: AuthUser[]; error: string | null }> 
     const admin = createServerClient(url, serviceKey, {
       auth: { persistSession: false, autoRefreshToken: false },
     })
-    const { data, error } = await admin.auth.admin.listUsers({ perPage: 200 })
+    const { data, error } = await admin.auth.admin.listUsers({
+      page: 1,
+      perPage: 1000,
+    })
     if (error) {
       return { users: [], error: error.message }
     }
