@@ -8,15 +8,15 @@ interface AuthUser {
   id: string
   email: string | null
   created_at: string
-  user_metadata?: {
-    full_name?: string
-    name?: string
-    provider?: string
-  }
+  user_metadata?: Record<string, unknown>
   app_metadata?: {
     provider?: string
     providers?: string[]
   }
+  identities?: Array<{
+    provider?: string
+    identity_data?: Record<string, unknown>
+  }>
 }
 
 async function getUsers(): Promise<{ users: AuthUser[]; error: string | null }> {
@@ -64,9 +64,66 @@ function getProvider(user: AuthUser): string {
   return (
     user.app_metadata?.provider ??
     user.app_metadata?.providers?.[0] ??
-    user.user_metadata?.provider ??
+    (user.user_metadata?.provider as string | undefined) ??
     '—'
   )
+}
+
+function getUserName(user: AuthUser): string {
+  return (
+    (user.user_metadata?.full_name as string | undefined) ??
+    (user.user_metadata?.name as string | undefined) ??
+    user.email?.split('@')[0] ??
+    '—'
+  )
+}
+
+/**
+ * 카카오 talk_message 동의 여부를 user_metadata에서 추출.
+ * Supabase가 카카오에서 받아오는 메타데이터 구조에 따라 체크:
+ * - custom_claims.talk_message
+ * - provider_token_scope에 "talk_message" 포함
+ * - kakao_account 내부 consent 필드
+ * 정보가 없으면 null 반환.
+ */
+function getKakaoMessageConsent(user: AuthUser): boolean | null {
+  const provider = getProvider(user)
+  if (provider !== 'kakao') return null
+
+  const meta = user.user_metadata ?? {}
+
+  // 방법 1: custom_claims
+  const claims = meta.custom_claims as Record<string, unknown> | undefined
+  if (claims && typeof claims.talk_message === 'boolean') {
+    return claims.talk_message
+  }
+
+  // 방법 2: provider_token_scope
+  const scope =
+    (meta.provider_token_scope as string | undefined) ??
+    (meta.scope as string | undefined) ??
+    ''
+  if (scope && scope.includes('talk_message')) return true
+
+  // 방법 3: kakao_account 동의 정보
+  const kakaoAccount = meta.kakao_account as Record<string, unknown> | undefined
+  if (kakaoAccount) {
+    if (kakaoAccount.talk_message_needs_agreement === false) return true
+    if (kakaoAccount.talk_message_needs_agreement === true) return false
+  }
+
+  // 방법 4: identities의 identity_data
+  const kakaoIdentity = (user.identities ?? []).find(
+    (i) => i.provider === 'kakao'
+  )
+  if (kakaoIdentity?.identity_data) {
+    const idScope = kakaoIdentity.identity_data.provider_token_scope as
+      | string
+      | undefined
+    if (idScope && idScope.includes('talk_message')) return true
+  }
+
+  return null
 }
 
 export default async function AdminUsersPage() {
@@ -94,21 +151,36 @@ export default async function AdminUsersPage() {
                   <th className="px-4 py-3 font-medium">닉네임</th>
                   <th className="px-4 py-3 font-medium">이메일</th>
                   <th className="px-4 py-3 font-medium">로그인 방법</th>
+                  <th className="px-4 py-3 font-medium">메시지 동의</th>
                   <th className="px-4 py-3 font-medium">가입일</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E5E8EB]">
                 {users.map((u) => {
-                  const name =
-                    u.user_metadata?.full_name ??
-                    u.user_metadata?.name ??
-                    u.email?.split('@')[0] ??
-                    '—'
+                  const provider = getProvider(u)
+                  const consent = getKakaoMessageConsent(u)
                   return (
                     <tr key={u.id} className="hover:bg-[#F9FAFB]">
-                      <td className="px-4 py-3 font-medium text-[#191F28]">{name}</td>
-                      <td className="px-4 py-3 text-[#4E5968]">{u.email ?? '—'}</td>
-                      <td className="px-4 py-3 text-[#4E5968]">{getProvider(u)}</td>
+                      <td className="px-4 py-3 font-medium text-[#191F28]">
+                        {getUserName(u)}
+                      </td>
+                      <td className="px-4 py-3 text-[#4E5968]">
+                        {u.email ?? '—'}
+                      </td>
+                      <td className="px-4 py-3 text-[#4E5968]">{provider}</td>
+                      <td className="px-4 py-3">
+                        {provider !== 'kakao' ? (
+                          <span className="text-[#B0B8C1]">—</span>
+                        ) : consent === true ? (
+                          <span className="text-[#1B8C3D] font-medium">
+                            동의
+                          </span>
+                        ) : consent === false ? (
+                          <span className="text-[#8B95A1]">미동의</span>
+                        ) : (
+                          <span className="text-[#B0B8C1]">확인 안됨</span>
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-[#4E5968] tabular-nums">
                         {formatDate(u.created_at)}
                       </td>
