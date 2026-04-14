@@ -48,22 +48,8 @@ export default function AuthCallbackHandler() {
         return
       }
 
-      // 카카오 유저이고 provider_token이 있으면 동의 정보 저장
-      const provider = session.user.app_metadata?.provider
-      if (provider === 'kakao' && session.provider_token) {
-        try {
-          await fetch('/api/kakao-consent', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              providerToken: session.provider_token,
-              userId: session.user.id,
-            }),
-          })
-        } catch {
-          // 동의 저장 실패해도 로그인은 계속 진행
-        }
-      }
+      // 카카오 동의 감지는 현재 비활성 (talk_message scope 미설정)
+      // 향후 재활성화 시 /api/kakao-consent 호출 복원
 
       router.replace(next)
     }
