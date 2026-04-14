@@ -33,6 +33,21 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!error) {
+      // DEBUG: 카카오 유저 메타데이터 확인용 (Vercel Logs에서 확인)
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        console.log('=== KAKAO USER DEBUG ===')
+        console.log(JSON.stringify(user, null, 2))
+        console.log('=== USER METADATA ===')
+        console.log(JSON.stringify(user?.user_metadata, null, 2))
+        console.log('=== APP METADATA ===')
+        console.log(JSON.stringify(user?.app_metadata, null, 2))
+        console.log('=== IDENTITIES ===')
+        console.log(JSON.stringify(user?.identities, null, 2))
+      } catch {
+        // debug 실패해도 무시
+      }
+
       return NextResponse.redirect(`${origin}${next}`)
     }
   }
