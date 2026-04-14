@@ -13,19 +13,20 @@ interface AuthUser {
     provider?: string
     providers?: string[]
   }
-  identities?: Array<{
-    provider?: string
-    identity_data?: Record<string, unknown>
-  }>
 }
 
-async function getUsers(): Promise<{ users: AuthUser[]; error: string | null }> {
+async function getUsers(): Promise<{
+  users: AuthUser[]
+  consentsMap: Map<string, boolean | null>
+  error: string | null
+}> {
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
 
   if (serviceKey.includes('PLACEHOLDER') || !serviceKey || !url) {
     return {
       users: [],
+      consentsMap: new Map(),
       error:
         'SUPABASE_SERVICE_ROLE_KEY가 설정되지 않았습니다. .env.local에 실제 키를 입력하세요.',
     }
@@ -35,17 +36,37 @@ async function getUsers(): Promise<{ users: AuthUser[]; error: string | null }> 
     const admin = createServerClient(url, serviceKey, {
       auth: { persistSession: false, autoRefreshToken: false },
     })
-    const { data, error } = await admin.auth.admin.listUsers({
-      page: 1,
-      perPage: 1000,
-    })
-    if (error) {
-      return { users: [], error: error.message }
+
+    // 유저 목록 + 동의 정보 병렬 조회
+    const [usersRes, consentsRes] = await Promise.all([
+      admin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
+      admin.from('user_consents').select('id, kakao_message_agreed'),
+    ])
+
+    if (usersRes.error) {
+      return { users: [], consentsMap: new Map(), error: usersRes.error.message }
     }
-    return { users: (data.users ?? []) as unknown as AuthUser[], error: null }
+
+    // 동의 정보 맵 구성 (user_consents 테이블이 없어도 빈 맵으로 처리)
+    const consentsMap = new Map<string, boolean | null>()
+    if (!consentsRes.error && consentsRes.data) {
+      for (const row of consentsRes.data as Array<{
+        id: string
+        kakao_message_agreed: boolean | null
+      }>) {
+        consentsMap.set(row.id, row.kakao_message_agreed)
+      }
+    }
+
+    return {
+      users: (usersRes.data.users ?? []) as unknown as AuthUser[],
+      consentsMap,
+      error: null,
+    }
   } catch (e) {
     return {
       users: [],
+      consentsMap: new Map(),
       error: e instanceof Error ? e.message : '유저 조회 실패',
     }
   }
@@ -78,56 +99,8 @@ function getUserName(user: AuthUser): string {
   )
 }
 
-/**
- * 카카오 talk_message 동의 여부를 user_metadata에서 추출.
- * Supabase가 카카오에서 받아오는 메타데이터 구조에 따라 체크:
- * - custom_claims.talk_message
- * - provider_token_scope에 "talk_message" 포함
- * - kakao_account 내부 consent 필드
- * 정보가 없으면 null 반환.
- */
-function getKakaoMessageConsent(user: AuthUser): boolean | null {
-  const provider = getProvider(user)
-  if (provider !== 'kakao') return null
-
-  const meta = user.user_metadata ?? {}
-
-  // 방법 1: custom_claims
-  const claims = meta.custom_claims as Record<string, unknown> | undefined
-  if (claims && typeof claims.talk_message === 'boolean') {
-    return claims.talk_message
-  }
-
-  // 방법 2: provider_token_scope
-  const scope =
-    (meta.provider_token_scope as string | undefined) ??
-    (meta.scope as string | undefined) ??
-    ''
-  if (scope && scope.includes('talk_message')) return true
-
-  // 방법 3: kakao_account 동의 정보
-  const kakaoAccount = meta.kakao_account as Record<string, unknown> | undefined
-  if (kakaoAccount) {
-    if (kakaoAccount.talk_message_needs_agreement === false) return true
-    if (kakaoAccount.talk_message_needs_agreement === true) return false
-  }
-
-  // 방법 4: identities의 identity_data
-  const kakaoIdentity = (user.identities ?? []).find(
-    (i) => i.provider === 'kakao'
-  )
-  if (kakaoIdentity?.identity_data) {
-    const idScope = kakaoIdentity.identity_data.provider_token_scope as
-      | string
-      | undefined
-    if (idScope && idScope.includes('talk_message')) return true
-  }
-
-  return null
-}
-
 export default async function AdminUsersPage() {
-  const { users, error } = await getUsers()
+  const { users, consentsMap, error } = await getUsers()
 
   return (
     <div>
@@ -158,7 +131,7 @@ export default async function AdminUsersPage() {
               <tbody className="divide-y divide-[#E5E8EB]">
                 {users.map((u) => {
                   const provider = getProvider(u)
-                  const consent = getKakaoMessageConsent(u)
+                  const consent = consentsMap.get(u.id)
                   return (
                     <tr key={u.id} className="hover:bg-[#F9FAFB]">
                       <td className="px-4 py-3 font-medium text-[#191F28]">

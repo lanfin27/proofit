@@ -1,4 +1,5 @@
 import { createServerClient } from '@supabase/ssr'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 
@@ -30,22 +31,60 @@ export async function GET(request: Request) {
       }
     )
 
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code)
 
-    if (!error) {
-      // DEBUG: 카카오 유저 메타데이터 확인용 (Vercel Logs에서 확인)
+    if (!error && data.session) {
+      // 카카오 유저: provider_token으로 동의 항목 조회 → user_consents에 저장
       try {
-        const { data: { user } } = await supabase.auth.getUser()
-        console.log('=== KAKAO USER DEBUG ===')
-        console.log(JSON.stringify(user, null, 2))
-        console.log('=== USER METADATA ===')
-        console.log(JSON.stringify(user?.user_metadata, null, 2))
-        console.log('=== APP METADATA ===')
-        console.log(JSON.stringify(user?.app_metadata, null, 2))
-        console.log('=== IDENTITIES ===')
-        console.log(JSON.stringify(user?.identities, null, 2))
-      } catch {
-        // debug 실패해도 무시
+        const session = data.session
+        const user = session.user
+        const provider = user.app_metadata?.provider
+
+        if (
+          provider === 'kakao' &&
+          session.provider_token &&
+          process.env.SUPABASE_SERVICE_ROLE_KEY &&
+          !process.env.SUPABASE_SERVICE_ROLE_KEY.includes('PLACEHOLDER')
+        ) {
+          const scopeRes = await fetch(
+            'https://kapi.kakao.com/v2/user/scopes',
+            {
+              headers: {
+                Authorization: `Bearer ${session.provider_token}`,
+              },
+            }
+          )
+
+          if (scopeRes.ok) {
+            const scopeData = (await scopeRes.json()) as {
+              scopes?: Array<{ id: string; agreed: boolean }>
+            }
+
+            const talkScope = scopeData.scopes?.find(
+              (s) => s.id === 'talk_message'
+            )
+            const agreed =
+              talkScope !== undefined ? talkScope.agreed === true : null
+
+            const admin = createAdminClient(
+              process.env.NEXT_PUBLIC_SUPABASE_URL!,
+              process.env.SUPABASE_SERVICE_ROLE_KEY!,
+              { auth: { persistSession: false, autoRefreshToken: false } }
+            )
+
+            await admin.from('user_consents').upsert(
+              {
+                id: user.id,
+                kakao_message_agreed: agreed,
+                updated_at: new Date().toISOString(),
+              },
+              { onConflict: 'id' }
+            )
+          }
+        }
+      } catch (err) {
+        // 동의 확인 실패해도 로그인 플로우를 절대 차단하지 않는다
+        console.error('Kakao scope check failed:', err)
       }
 
       return NextResponse.redirect(`${origin}${next}`)
