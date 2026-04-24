@@ -62,7 +62,7 @@ export default function ReportClaims({
                 {item.status}
               </div>
             </div>
-            <div className="text-sm text-toss-gray-700 font-medium leading-[1.55] mb-2 before:content-['\u201C'] before:text-toss-gray-400 before:mr-0.5 after:content-['\u201D'] after:text-toss-gray-400 after:ml-0.5">
+            <div className="text-sm text-toss-gray-700 font-medium leading-[1.55] mb-2 before:content-['“'] before:text-toss-gray-400 before:mr-0.5 after:content-['”'] after:text-toss-gray-400 after:ml-0.5">
               {item.claim}
             </div>
             <div
