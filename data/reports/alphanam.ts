@@ -5,6 +5,7 @@ export const alphanamInstructor: Instructor = {
   privateSlug: 'alphanam-preview-zyfjrewz',
   name: '알파남',
   initial: '알',
+  profileImage: '/instructors/alphanam.png',
   subject: '애드센스 광고수입 수익화 강의',
   tags: ['애드센스', '블로그', '워드프레스'],
   status: 'draft',
