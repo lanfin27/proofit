@@ -62,11 +62,6 @@ export default function ReportBusinessFinance({ data }: Props) {
           <div className="bf-method-value">{data.evidence.methodValue}</div>
         </div>
       </div>
-
-      <div
-        className="net-note"
-        dangerouslySetInnerHTML={{ __html: data.netNote }}
-      />
     </div>
   )
 }

@@ -130,8 +130,6 @@ export const alphanamReport: Report = {
       methodLabel: '환율 적용',
       methodValue: '서울외국환중개 월평균 기간별 매매기준율',
     },
-    netNote:
-      '광고수입이 전체 사업수입의 약 70% 비중으로 <strong>강사의 주된 사업임을 확인</strong>.',
   },
   process: [
     {
