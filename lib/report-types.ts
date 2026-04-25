@@ -85,7 +85,6 @@ export type ReportBusinessFinance = {
     methodLabel: string
     methodValue: string
   }
-  netNote: string
 }
 
 // Process
