@@ -5,6 +5,7 @@ export type Instructor = {
   privateSlug: string
   name: string
   initial: string
+  profileImage?: string
   subject: string
   tags: string[]
   status: 'draft' | 'published'

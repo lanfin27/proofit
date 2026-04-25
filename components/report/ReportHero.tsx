@@ -1,4 +1,5 @@
 import type { Instructor, ReportHero as ReportHeroData } from '@/lib/report-types'
+import ProfileAvatar from './ProfileAvatar'
 
 type Props = {
   instructor: Instructor
@@ -9,9 +10,7 @@ export default function ReportHero({ instructor, hero }: Props) {
   return (
     <div className="hero">
       <div className="profile-head">
-        <div className="profile-avatar">
-          <span>{instructor.initial}</span>
-        </div>
+        <ProfileAvatar instructor={instructor} />
         <div className="profile-meta">
           <div className="name-row">
             <div className="profile-name">{instructor.name}</div>
