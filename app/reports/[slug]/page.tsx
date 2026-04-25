@@ -1,18 +1,19 @@
 import { notFound } from 'next/navigation'
-import { Metadata } from 'next'
+import type { Metadata } from 'next'
 import { getReportInstructor, getReport } from '@/lib/report-data'
 import { canViewDraft, isProductionDeployment } from '@/lib/env'
+import DraftBanner from '@/components/report/DraftBanner'
 import ReportHero from '@/components/report/ReportHero'
+import PartDivider from '@/components/report/PartDivider'
 import ReportClaims from '@/components/report/ReportClaims'
+import ReportBusinessFinance from '@/components/report/ReportBusinessFinance'
 import ReportProcess from '@/components/report/ReportProcess'
-import ReportChecklist from '@/components/report/ReportChecklist'
-import ReportConsistency from '@/components/report/ReportConsistency'
-import ReportPayback from '@/components/report/ReportPayback'
-import ReportJudgment from '@/components/report/ReportJudgment'
+import ReportFactChecklist from '@/components/report/ReportFactChecklist'
 import ReportDocuments from '@/components/report/ReportDocuments'
 import ReportAction from '@/components/report/ReportAction'
-import ReportDisclaimer from '@/components/report/ReportDisclaimer'
-import DraftBanner from '@/components/report/DraftBanner'
+import ReportPayback from '@/components/report/ReportPayback'
+import ReportLegal from '@/components/report/ReportLegal'
+import './report.css'
 
 interface PageProps {
   params: { slug: string }
@@ -27,8 +28,6 @@ export async function generateMetadata({
     return { title: 'Proofit', robots: { index: false } }
   }
 
-  // 프로덕션 + published 조합에서만 색인 허용.
-  // Preview/로컬은 published라도 검색엔진 노출 금지.
   const canIndex =
     instructor.status === 'published' && isProductionDeployment()
 
@@ -46,7 +45,6 @@ export default function ReportPage({ params }: PageProps) {
     notFound()
   }
 
-  // 프로덕션에서는 draft 차단. Preview/로컬에서는 검토 허용.
   if (instructor.status !== 'published' && !canViewDraft()) {
     notFound()
   }
@@ -58,29 +56,42 @@ export default function ReportPage({ params }: PageProps) {
   }
 
   return (
-    <>
+    <div className="report-page">
       <DraftBanner status={instructor.status} />
-      <div className="max-w-[520px] mx-auto bg-white min-h-screen text-[15px] leading-[1.5] tracking-[-0.02em]">
-        <ReportHero
-          profile={report.profile}
-          badges={report.badges}
-          video={report.video}
-          heroNumber={report.heroNumber}
-          heroStats={report.heroStats}
+      <div className="app">
+        <ReportHero instructor={instructor} hero={report.hero} />
+
+        <PartDivider
+          num="01"
+          title="확인 결과"
+          desc="강사 주장 · 수익 확인"
         />
-        <ReportClaims {...report.claims} />
-        <ReportProcess {...report.process} />
-        <ReportChecklist {...report.checklist} />
-        <ReportConsistency {...report.consistency} />
-        <ReportPayback {...report.payback} />
-        <ReportJudgment {...report.judgment} />
-        <ReportDocuments {...report.documents} />
-        <ReportAction {...report.action} />
-        <ReportDisclaimer
-          disclaimer={report.disclaimer}
-          meta={report.meta}
+        <ReportClaims data={report.claims} />
+        <ReportBusinessFinance data={report.businessFinance} />
+
+        <PartDivider
+          num="02"
+          title="확인 절차"
+          desc="표준 3단계 · 체크리스트 · 자료"
+        />
+        <ReportProcess steps={report.process} />
+        <ReportFactChecklist items={report.factChecklist} />
+        <ReportDocuments data={report.documents} />
+        <ReportAction data={report.action} />
+
+        <PartDivider
+          num="03"
+          title="강의료 판단"
+          desc="회수 기간 시뮬레이션"
+        />
+        <ReportPayback data={report.payback} />
+
+        <ReportLegal
+          data={report.legal}
+          reportVersion={instructor.reportVersion}
+          reportCompletedAt={instructor.reportCompletedAt}
         />
       </div>
-    </>
+    </div>
   )
 }

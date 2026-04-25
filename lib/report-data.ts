@@ -1,19 +1,19 @@
 import { alphanamInstructor, alphanamReport } from '@/data/reports/alphanam'
-import type { ReportInstructor, Report } from '@/lib/report-types'
+import type { Instructor, Report } from '@/lib/report-types'
 
-const instructors: ReportInstructor[] = [alphanamInstructor]
-const reports: Report[] = [alphanamReport]
+const instructors: Instructor[] = [alphanamInstructor]
+const reports: Record<string, Report> = {
+  alphanam: alphanamReport,
+}
 
-export function getReportInstructor(
-  slug: string
-): ReportInstructor | undefined {
+export function getReportInstructor(slug: string): Instructor | undefined {
   return instructors.find((i) => i.slug === slug)
 }
 
 export function getReport(slug: string): Report | undefined {
-  return reports.find((r) => r.instructorSlug === slug)
+  return reports[slug]
 }
 
-export function getAllReportInstructors(): ReportInstructor[] {
+export function getAllReportInstructors(): Instructor[] {
   return instructors
 }
