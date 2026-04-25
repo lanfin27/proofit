@@ -3,6 +3,7 @@ import type { Instructor, Report } from '@/lib/report-types'
 export const alphanamInstructor: Instructor = {
   slug: 'alphanam',
   privateSlug: 'alphanam-preview-zyfjrewz',
+  supabaseId: '1029ddf5-0646-46a4-9a87-4977f35638ed',
   name: '알파남',
   initial: '알',
   profileImage: '/instructors/alphanam.png',

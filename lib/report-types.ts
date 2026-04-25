@@ -3,6 +3,7 @@
 export type Instructor = {
   slug: string
   privateSlug: string
+  supabaseId?: string
   name: string
   initial: string
   profileImage?: string
