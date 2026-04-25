@@ -1,8 +1,12 @@
 import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
 import { getInstructor, getCourses } from '@/lib/data'
+import { getReportInstructorBySupabaseId } from '@/lib/instructor-mapping'
+import { isNewProfileDesignEnabled } from '@/lib/feature-flags'
 import CategoryIcon from '@/components/CategoryIcon'
 import InstructorDetailClient from '@/components/InstructorDetailClient'
+import ProfilePageV2 from '@/components/instructor/ProfilePageV2'
+import './profile.css'
 
 interface PageProps {
   params: { id: string }
@@ -51,6 +55,14 @@ export default async function InstructorDetailPage({ params }: PageProps) {
 
   if (!instructor) {
     notFound()
+  }
+
+  // v2 design only when (a) the feature flag is on AND (b) this
+  // Supabase row maps to a report-side instructor. Non-mapped rows
+  // keep the existing layout regardless of the flag.
+  const reportInstructor = getReportInstructorBySupabaseId(params.id)
+  if (isNewProfileDesignEnabled() && reportInstructor) {
+    return <ProfilePageV2 instructor={instructor} courses={courses} />
   }
 
   return (
