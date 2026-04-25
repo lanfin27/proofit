@@ -112,6 +112,8 @@ export default function ReportPage({ params }: PageProps) {
           data={report.legal}
           reportVersion={instructor.reportVersion}
           reportCompletedAt={instructor.reportCompletedAt}
+          instructorName={instructor.name}
+          slug={instructor.slug}
         />
       </div>
     </div>
