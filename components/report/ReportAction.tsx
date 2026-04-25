@@ -1,25 +1,29 @@
-interface ReportActionProps {
-  title: string
-  sub: string
-  buttonText: string
+'use client'
+
+import type { ReportAction as ReportActionData } from '@/lib/report-types'
+
+type Props = {
+  data: ReportActionData
 }
 
-export default function ReportAction({
-  title,
-  sub,
-  buttonText,
-}: ReportActionProps) {
+export default function ReportAction({ data }: Props) {
+  const handleClick = (e: React.MouseEvent) => {
+    if (!data.buttonHref) {
+      e.preventDefault()
+    }
+  }
+
   return (
-    <div className="mt-4 mx-5 p-6 bg-toss-gray-100 rounded-xl text-center">
-      <div className="text-[15px] font-extrabold text-toss-gray-900 tracking-[-0.025em] mb-1">
-        {title}
-      </div>
-      <div className="text-[13px] text-toss-gray-500 font-medium mb-4">
-        {sub}
-      </div>
-      <button className="bg-toss-gray-900 text-white border-0 py-3.5 px-[18px] rounded-xl text-[15px] font-extrabold tracking-[-0.02em] w-full cursor-pointer font-sans">
-        {buttonText}
-      </button>
+    <div className="action">
+      <div className="title">{data.title}</div>
+      <div className="sub">{data.sub}</div>
+      {data.buttonHref ? (
+        <a href={data.buttonHref} onClick={handleClick}>
+          <button>{data.buttonLabel}</button>
+        </a>
+      ) : (
+        <button onClick={handleClick}>{data.buttonLabel}</button>
+      )}
     </div>
   )
 }

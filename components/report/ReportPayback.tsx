@@ -1,85 +1,118 @@
-import type { ReportPaybackRow } from '@/lib/report-types'
+'use client'
 
-interface ReportPaybackProps {
-  sectionTitle: string
-  sectionSub: string
-  premise: string
-  monthlyLabel: string
-  monthlyValue: string
-  monthlyUnit: string
-  monthlySub: string
-  tableHeaders: [string, string]
-  rows: ReportPaybackRow[]
-  warning: string
+import { useState } from 'react'
+import type { ReportPayback as ReportPaybackData } from '@/lib/report-types'
+
+type Props = {
+  data: ReportPaybackData
 }
 
-export default function ReportPayback({
-  sectionTitle,
-  sectionSub,
-  premise,
-  monthlyLabel,
-  monthlyValue,
-  monthlyUnit,
-  monthlySub,
-  tableHeaders,
-  rows,
-  warning,
-}: ReportPaybackProps) {
+export default function ReportPayback({ data }: Props) {
+  const [value, setValue] = useState<number>(data.defaultValue)
+
+  const dailyNet = data.monthlyNetIncome / 30
+  const days = value === 0 ? 0 : value / dailyNet
+  const ratio = (value / data.monthlyNetIncome) * 100
+  const barWidth = Math.max(0.3, Math.min(ratio, 100))
+
+  const clampValue = (raw: string): number => {
+    const parsed = parseInt(raw)
+    if (isNaN(parsed)) return 0
+    if (parsed < data.sliderMin) return data.sliderMin
+    if (parsed > data.sliderMax) return data.sliderMax
+    return parsed
+  }
+
   return (
-    <div className="px-5 pt-10">
-      <h2 className="text-[19px] font-extrabold text-toss-gray-900 tracking-[-0.035em] mb-1.5">
-        {sectionTitle}
-      </h2>
-      <div className="text-[13px] text-toss-gray-500 font-medium mb-5">
-        {sectionSub}
-      </div>
+    <div className="sec">
+      <h2>강의료 회수 계산기</h2>
+      <div className="sec-sub">수강생이 강사 수익 수준 도달 시 회수 기간</div>
 
-      {/* Premise */}
-      <div
-        className="py-3.5 px-4 bg-toss-gray-100 rounded-xl mb-5 text-[13px] text-toss-gray-700 leading-[1.6] font-medium [&_strong]:text-toss-gray-900 [&_strong]:font-bold"
-        dangerouslySetInnerHTML={{ __html: premise }}
-      />
-
-      {/* Monthly */}
-      <div className="mb-6">
-        <div className="text-xs text-toss-gray-500 font-semibold mb-1.5">
-          {monthlyLabel}
-        </div>
-        <div className="text-[32px] font-extrabold text-toss-gray-900 tracking-[-0.045em] leading-none tabular-nums">
-          {monthlyValue}
-          <span className="text-lg text-toss-gray-700 font-bold ml-0.5">
-            {monthlyUnit}
-          </span>
-        </div>
-        <div className="text-xs text-toss-gray-500 font-medium mt-1.5">
-          {monthlySub}
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="flex flex-col">
-        <div className="grid grid-cols-2 py-2.5 border-b border-toss-gray-100 text-[11px] text-toss-gray-500 font-bold tracking-[0.02em] uppercase">
-          <div>{tableHeaders[0]}</div>
-          <div className="text-right">{tableHeaders[1]}</div>
-        </div>
-        {rows.map((row, i) => (
-          <div
-            key={i}
-            className="grid grid-cols-2 py-4 border-b border-toss-gray-100 items-center"
-          >
-            <div className="text-[15px] font-bold text-toss-gray-900 tracking-[-0.025em]">
-              {row.fee}
+      <div className="pb-calc">
+        <div className="pb-fixed">
+          <div className="pb-fixed-head">
+            <div className="pb-fixed-label">
+              {data.monthlyNetLabel}
+              <span className="pb-fixed-sub">{data.monthlyNetSub}</span>
             </div>
-            <div className="text-lg font-extrabold text-toss-gray-900 tracking-[-0.035em] text-right tabular-nums">
-              {row.days}
+            <div className="pb-fixed-amount">{data.monthlyNetDisplay}</div>
+          </div>
+          <div className="pb-fixed-bar"></div>
+        </div>
+
+        <div className="pb-input-area">
+          <div className="pb-input-label">강의료를 입력해 보세요</div>
+
+          <div className="pb-slider-current">
+            약 <span>{value.toLocaleString()}</span>만 원
+          </div>
+
+          <div className="pb-slider-wrap">
+            <input
+              type="range"
+              className="pb-slider"
+              min={data.sliderMin}
+              max={data.sliderMax}
+              step={data.sliderStep}
+              value={value}
+              onChange={(e) => setValue(clampValue(e.target.value))}
+            />
+          </div>
+
+          <div className="pb-slider-marks">
+            <span>0</span>
+            <span>1,250만</span>
+            <span>2,500만</span>
+          </div>
+
+          <div className="pb-direct-input">
+            <span className="pb-direct-input-label">직접 입력</span>
+            <input
+              type="number"
+              min={data.sliderMin}
+              max={data.sliderMax}
+              step={data.sliderStep}
+              value={value}
+              onChange={(e) => setValue(clampValue(e.target.value))}
+              onBlur={(e) => {
+                if (e.target.value === '' || isNaN(parseInt(e.target.value))) {
+                  setValue(0)
+                }
+              }}
+            />
+            <span className="pb-direct-input-unit">만 원</span>
+          </div>
+
+          <div className="pb-default-note">{data.defaultNote}</div>
+        </div>
+
+        <div className="pb-result">
+          <div className="pb-result-head">
+            <div className="pb-result-label">회수 기간</div>
+            <div className="pb-result-days">
+              약 {data.learningMonths}개월 + <span>{days.toFixed(1)}</span>일
             </div>
           </div>
-        ))}
+          <div className="pb-learning-note">{data.learningNote}</div>
+
+          <div className="pb-result-bar-row">
+            <span className="pb-result-bar-label">입력 강의료 비중</span>
+            <span className="pb-result-bar-value">
+              약 <span>{ratio.toFixed(1)}</span>%
+            </span>
+          </div>
+          <div className="pb-result-bar-track">
+            <div
+              className="pb-result-bar-fill"
+              style={{ width: `${barWidth}%` }}
+            />
+          </div>
+        </div>
       </div>
 
       <div
-        className="mt-4 text-xs text-toss-gray-500 leading-[1.65] font-medium [&_strong]:text-toss-gray-700 [&_strong]:font-bold"
-        dangerouslySetInnerHTML={{ __html: warning }}
+        className="pb-explain"
+        dangerouslySetInnerHTML={{ __html: data.explain }}
       />
     </div>
   )
