@@ -10,7 +10,11 @@ export default function ReportHero({ instructor, hero }: Props) {
   return (
     <div className="hero">
       <div className="profile-head">
-        <ProfileAvatar instructor={instructor} />
+        <ProfileAvatar
+          src={instructor.profileImage}
+          alt={instructor.name}
+          initial={instructor.initial}
+        />
         <div className="profile-meta">
           <div className="name-row">
             <div className="profile-name">{instructor.name}</div>

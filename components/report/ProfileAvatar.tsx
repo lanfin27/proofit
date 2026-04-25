@@ -2,29 +2,30 @@
 
 import Image from 'next/image'
 import { useState } from 'react'
-import type { Instructor } from '@/lib/report-types'
 
 type Props = {
-  instructor: Instructor
+  src?: string
+  alt: string
+  initial: string
 }
 
-export default function ProfileAvatar({ instructor }: Props) {
+export default function ProfileAvatar({ src, alt, initial }: Props) {
   const [imageError, setImageError] = useState(false)
-  const showImage = Boolean(instructor.profileImage) && !imageError
+  const showImage = Boolean(src) && !imageError
 
   return (
     <div className="profile-avatar">
       {showImage ? (
         <Image
-          src={instructor.profileImage!}
-          alt={instructor.name}
+          src={src!}
+          alt={alt}
           width={64}
           height={64}
           priority
           onError={() => setImageError(true)}
         />
       ) : (
-        <span>{instructor.initial}</span>
+        <span>{initial}</span>
       )}
     </div>
   )
