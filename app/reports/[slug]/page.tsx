@@ -1,4 +1,4 @@
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import type { Metadata } from 'next'
 import { getReportInstructor, getReport } from '@/lib/report-data'
 import { canViewDraft, isProductionDeployment } from '@/lib/env'
@@ -28,8 +28,14 @@ export async function generateMetadata({
     return { title: 'Proofit', robots: { index: false } }
   }
 
+  const accessedViaPrivateSlug = params.slug === instructor.privateSlug
+
+  // 정식 슬러그 + published + 프로덕션에서만 인덱싱 허용.
+  // 비밀 슬러그는 어떤 환경에서도 noindex.
   const canIndex =
-    instructor.status === 'published' && isProductionDeployment()
+    !accessedViaPrivateSlug &&
+    instructor.status === 'published' &&
+    isProductionDeployment()
 
   return {
     title: `${instructor.name} · 수익확인 완료 | Proofit`,
@@ -45,7 +51,20 @@ export default function ReportPage({ params }: PageProps) {
     notFound()
   }
 
-  if (instructor.status !== 'published' && !canViewDraft()) {
+  const accessedViaPrivateSlug = params.slug === instructor.privateSlug
+
+  // published 상태에서 비밀 슬러그로 접근 시 정식 슬러그로 영구 리다이렉트
+  if (accessedViaPrivateSlug && instructor.status === 'published') {
+    redirect(`/reports/${instructor.slug}`)
+  }
+
+  // 정식 슬러그 + draft + 프로덕션 → 404
+  // (비밀 슬러그는 어떤 환경에서도 통과 — 사전 공유 목적)
+  if (
+    !accessedViaPrivateSlug &&
+    instructor.status !== 'published' &&
+    !canViewDraft()
+  ) {
     notFound()
   }
 
@@ -57,7 +76,10 @@ export default function ReportPage({ params }: PageProps) {
 
   return (
     <div className="report-page">
-      <DraftBanner status={instructor.status} />
+      <DraftBanner
+        status={instructor.status}
+        accessedViaPrivateSlug={accessedViaPrivateSlug}
+      />
       <div className="app">
         <ReportHero instructor={instructor} hero={report.hero} />
 

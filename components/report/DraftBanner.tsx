@@ -2,18 +2,29 @@ import { getEnvLabel } from '@/lib/env'
 
 type Props = {
   status: 'draft' | 'published'
+  accessedViaPrivateSlug?: boolean
 }
 
-export default function DraftBanner({ status }: Props) {
+export default function DraftBanner({
+  status,
+  accessedViaPrivateSlug,
+}: Props) {
   const env = getEnvLabel()
 
-  if (env === 'production') return null
+  if (accessedViaPrivateSlug) {
+    return (
+      <div className="draft-banner">
+        비공개 사전 공유 링크 · 외부 공유 금지
+      </div>
+    )
+  }
+
   if (status === 'published') return null
+  if (env === 'production') return null
 
   const envLabel = env === 'preview' ? 'Preview' : 'Local'
-
   return (
-    <div className="bg-yellow-100 border-b border-yellow-400 py-2.5 px-4 text-center text-xs font-semibold text-yellow-900 tracking-[-0.01em]">
+    <div className="draft-banner">
       DRAFT · {envLabel} 환경 전용 · 프로덕션 비공개
     </div>
   )

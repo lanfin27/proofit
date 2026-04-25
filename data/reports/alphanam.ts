@@ -2,7 +2,7 @@ import type { Instructor, Report } from '@/lib/report-types'
 
 export const alphanamInstructor: Instructor = {
   slug: 'alphanam',
-  privateSlug: 'alphanam-preview-pending',
+  privateSlug: 'alphanam-preview-zyfjrewz',
   name: '알파남',
   initial: '알',
   subject: '애드센스 광고수입 수익화 강의',
