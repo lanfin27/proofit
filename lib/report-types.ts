@@ -159,8 +159,6 @@ export type ReportAction = {
 export type ReportLegal = {
   disclaimerLabel: string
   disclaimerParagraphs: string[]
-  copyrightLabel: string
-  copyrightText: string
 }
 
 // Combined Report
