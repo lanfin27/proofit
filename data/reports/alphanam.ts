@@ -9,7 +9,8 @@ export const alphanamInstructor: Instructor = {
   profileImage: '/instructors/alphanam.png',
   subject: '애드센스 광고수입 수익화 강의',
   tags: ['애드센스', '블로그', '워드프레스'],
-  status: 'draft',
+  status: 'published',
+  publishedAt: '2026-04-27T10:00:00+09:00',
   reportVersion: 'v1.0',
   reportCompletedAt: '2026.04.23',
 }
