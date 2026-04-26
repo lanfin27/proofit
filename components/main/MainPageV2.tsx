@@ -287,7 +287,7 @@ export default async function MainPageV2({ gateParam }: Props) {
                     다음 강사 검증 진행 중
                   </div>
                   <div className="vc-placeholder-desc">
-                    공인회계사 출신 팀이 강사들의 실제 수익을 검증하고 있습니다.
+                    Proofit이 강사들의 실제 수익을 검증하고 있습니다.
                   </div>
                 </div>
               </div>
