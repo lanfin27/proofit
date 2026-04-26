@@ -14,6 +14,10 @@ import FAQSection from '@/components/FAQSection'
 import GatedInstructorsLink from '@/components/GatedInstructorsLink'
 import LoginGateTrigger from '@/components/LoginGateTrigger'
 import LandingVerifiedStat from '@/components/LandingVerifiedStat'
+import {
+  SpotlightReportCta,
+  SpotlightVideoCard,
+} from '@/components/main/SpotlightGatedActions'
 
 // Carried over verbatim from app/page.tsx — same definitions live in
 // the legacy branch so behaviour stays identical when the flag flips.
@@ -169,28 +173,14 @@ export default async function MainPageV2({ gateParam }: Props) {
                     </div>
 
                     <div className="sp-ctas">
-                      <Link
-                        href={`/reports/${spotlight.slug}`}
-                        className="sp-cta-primary"
-                      >
-                        확인 리포트 보기 →
-                      </Link>
+                      <SpotlightReportCta slug={spotlight.slug} />
                     </div>
                   </div>
 
                   <div className="sp-right">
-                    <a
-                      href={spotlightReport.hero.videoUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="sp-video"
-                    >
-                      <div className="sp-video-play"></div>
-                      <div className="sp-video-caption">
-                        <div className="t1">▶ 진위확인 영상 보기</div>
-                        <div className="t2">Proofit 검증</div>
-                      </div>
-                    </a>
+                    <SpotlightVideoCard
+                      videoUrl={spotlightReport.hero.videoUrl}
+                    />
                   </div>
                 </div>
               </div>
