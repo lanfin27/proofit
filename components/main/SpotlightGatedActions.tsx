@@ -106,3 +106,35 @@ export function SpotlightVideoCard({ videoUrl }: VideoProps) {
     </a>
   )
 }
+
+type GatedLinkProps = {
+  href: string
+  className?: string
+  children: React.ReactNode
+}
+
+/**
+ * Generic gated <Link> wrapper. Use anywhere a <Link> would
+ * normally render but the destination should be reachable only by
+ * signed-in users — anonymous clicks open the login modal, signed-in
+ * clicks navigate normally. Children are rendered verbatim so the
+ * caller keeps full control over markup and styling (e.g. the
+ * verified-grid card has its own .vc layout with avatar / number /
+ * evidence / footer all inside the Link).
+ */
+export function GatedLink({ href, className, children }: GatedLinkProps) {
+  const { user, openLoginModal } = useGatedClick()
+
+  const handleClick = (e: React.MouseEvent) => {
+    if (!user) {
+      e.preventDefault()
+      openLoginModal('/')
+    }
+  }
+
+  return (
+    <Link href={href} className={className} onClick={handleClick}>
+      {children}
+    </Link>
+  )
+}
