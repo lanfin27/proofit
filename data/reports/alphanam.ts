@@ -17,8 +17,8 @@ export const alphanamInstructor: Instructor = {
 export const alphanamReport: Report = {
   instructorSlug: 'alphanam',
   hero: {
-    videoUrl: 'https://youtube.com/...',
-    videoDurationLabel: '1분 12초',
+    videoUrl:
+      'https://www.youtube.com/watch?v=bUj-Ek4lws4&list=PLsyS6OLpOfabqEqnw3l-9wTf0NvzqTZtv',
     cumulativeAdRevenue: {
       label: '누적 광고수입',
       valueNumber: '약 39.7',
@@ -138,9 +138,8 @@ export const alphanamReport: Report = {
       title: '국세청 증빙 진위확인',
       desc: '소득금액증명원·부가세 과세표준증명 홈택스 발급번호 검증',
       videoLink: {
-        url: 'https://youtube.com/...',
+        url: 'https://www.youtube.com/watch?v=bUj-Ek4lws4&list=PLsyS6OLpOfabqEqnw3l-9wTf0NvzqTZtv',
         label: '진위확인 영상 보기',
-        meta: '· 1분 12초',
       },
     },
     {

@@ -18,7 +18,6 @@ export type Instructor = {
 // Hero
 export type ReportHero = {
   videoUrl: string
-  videoDurationLabel: string
   cumulativeAdRevenue: {
     label: string
     valueNumber: string
@@ -96,7 +95,6 @@ export type ReportProcessStep = {
   videoLink?: {
     url: string
     label: string
-    meta: string
   }
 }
 
