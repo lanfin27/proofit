@@ -71,30 +71,70 @@ type VideoProps = {
 
 /**
  * Spotlight "진위확인 영상" card. Anonymous clicks open the login
- * modal; signed-in clicks open the YouTube link in a new tab.
+ * modal; signed-in clicks follow the YouTube link in a new tab via
+ * the underlying <a target="_blank">.
  *
- * Renders as a button so the gate can run before any navigation.
- * The visual styling matches the original .sp-video markup so the
- * server CSS still applies.
+ * Stays on <a> (not <button>) so the .sp-video CSS — aspect-ratio,
+ * gradient background, absolute-positioned play icon and caption —
+ * applies the same way it did before any auth gating was added.
+ * Mirrors the SpotlightReportCta pattern: preventDefault on the
+ * onClick, then openLoginModal.
  */
 export function SpotlightVideoCard({ videoUrl }: VideoProps) {
   const { user, openLoginModal } = useGatedClick()
 
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent) => {
     if (!user) {
+      e.preventDefault()
       openLoginModal('/')
-      return
     }
-    window.open(videoUrl, '_blank', 'noopener,noreferrer')
   }
 
   return (
-    <button type="button" className="sp-video" onClick={handleClick}>
+    <a
+      href={videoUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="sp-video"
+      onClick={handleClick}
+    >
       <div className="sp-video-play"></div>
       <div className="sp-video-caption">
         <div className="t1">▶ 진위확인 영상 보기</div>
         <div className="t2">Proofit 검증</div>
       </div>
-    </button>
+    </a>
+  )
+}
+
+type GatedLinkProps = {
+  href: string
+  className?: string
+  children: React.ReactNode
+}
+
+/**
+ * Generic gated <Link> wrapper. Use anywhere a <Link> would
+ * normally render but the destination should be reachable only by
+ * signed-in users — anonymous clicks open the login modal, signed-in
+ * clicks navigate normally. Children are rendered verbatim so the
+ * caller keeps full control over markup and styling (e.g. the
+ * verified-grid card has its own .vc layout with avatar / number /
+ * evidence / footer all inside the Link).
+ */
+export function GatedLink({ href, className, children }: GatedLinkProps) {
+  const { user, openLoginModal } = useGatedClick()
+
+  const handleClick = (e: React.MouseEvent) => {
+    if (!user) {
+      e.preventDefault()
+      openLoginModal('/')
+    }
+  }
+
+  return (
+    <Link href={href} className={className} onClick={handleClick}>
+      {children}
+    </Link>
   )
 }

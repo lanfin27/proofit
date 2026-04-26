@@ -1,5 +1,4 @@
 import Image from 'next/image'
-import Link from 'next/link'
 import { getInstructors, getStats } from '@/lib/data'
 import {
   getAllPublishedReportInstructors,
@@ -17,6 +16,7 @@ import LandingVerifiedStat from '@/components/LandingVerifiedStat'
 import {
   SpotlightReportCta,
   SpotlightVideoCard,
+  GatedLink,
 } from '@/components/main/SpotlightGatedActions'
 
 // Carried over verbatim from app/page.tsx — same definitions live in
@@ -211,7 +211,7 @@ export default async function MainPageV2({ gateParam }: Props) {
                       : null
 
                   return (
-                    <Link
+                    <GatedLink
                       key={inst.slug}
                       href={`/reports/${inst.slug}`}
                       className="vc"
@@ -277,7 +277,7 @@ export default async function MainPageV2({ gateParam }: Props) {
                         </div>
                         <span className="vc-cta">리포트 보기</span>
                       </div>
-                    </Link>
+                    </GatedLink>
                   )
                 })}
 
