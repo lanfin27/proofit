@@ -200,10 +200,7 @@ export default async function MainPageV2({ gateParam }: Props) {
               <div className="sec-head">
                 <div className="sec-head-left">
                   <div className="sec-label">수익확인 완료</div>
-                  <div className="sec-title">
-                    실제 수익이 확인된{' '}
-                    <span className="count">강사 {allPublished.length}명</span>
-                  </div>
+                  <div className="sec-title">실제 수익이 확인된 강사</div>
                   <div className="sec-sub">
                     진위확인된 국세청 증빙으로 수익을 확인한 강사
                   </div>
