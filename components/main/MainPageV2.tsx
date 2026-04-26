@@ -370,7 +370,7 @@ export default async function MainPageV2({ gateParam }: Props) {
       )}
 
       {/* 후킹 + 신뢰 — 다크 배경 */}
-      <section className="bg-[#3182F6] py-20 md:py-28 px-4 sm:px-6 lg:px-8">
+      <section className="bg-[#3182F6] py-14 md:py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-2xl md:text-[2.25rem] lg:text-[2.75rem] font-extrabold text-white leading-[1.25] tracking-[-0.02em]">
             아직도 수익 확인 안된
