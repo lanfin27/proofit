@@ -1,4 +1,11 @@
+import Image from 'next/image'
+import Link from 'next/link'
 import { getInstructors, getStats } from '@/lib/data'
+import {
+  getAllPublishedReportInstructors,
+  getRecentPublishedReportInstructors,
+} from '@/lib/instructor-mapping'
+import { getReport } from '@/lib/report-data'
 import InstructorList from '@/components/InstructorList'
 import LandingCTA from '@/components/LandingCTA'
 import InstructorRequestTrigger from '@/components/InstructorRequestTrigger'
@@ -61,6 +68,13 @@ export default async function MainPageV2({ gateParam }: Props) {
     getStats(),
   ])
 
+  const recentPublished = getRecentPublishedReportInstructors(7)
+  const allPublished = getAllPublishedReportInstructors()
+  const supabaseById = new Map(instructors.map((s) => [s.id, s]))
+
+  const spotlight = recentPublished[0] ?? null
+  const spotlightReport = spotlight ? getReport(spotlight.slug) : null
+
   const previewInstructors = instructors.slice(0, 10)
   const verifiedCount = instructors.filter((i) => i.is_verified).length
   const totalPlatforms = new Set(
@@ -78,21 +92,222 @@ export default async function MainPageV2({ gateParam }: Props) {
     <div>
       <LoginGateTrigger gate={gateParam ?? null} />
 
-      {/* Hero — 한 문장 임팩트 (v2 typography) */}
+      {/* Hero — v2 카피 + v2 typography */}
       <section className="pt-10 md:pt-16 lg:pt-20 pb-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
           <div className="main-page-hero">
             <h1>
-              수익이 확인된 강사를
+              강사가 정말 그 돈을 벌었는지,
               <br />
-              찾아보세요
+              <span className="accent">Proofit이 직접 확인합니다.</span>
             </h1>
             <p className="main-page-hero-lede">
-              공인회계사 출신 팀이 강사의 실제 수익을 직접 확인합니다.
+              진위확인된 국세청 증빙을 통해 확인된 수익만 공개합니다.
             </p>
           </div>
 
-          {/* 통계 — 히어로급 숫자 */}
+          {/* v2 spotlight + verified-grid (위치 B: 헤드라인 다음, 통계 앞) */}
+          <div className="main-v2-section">
+            {spotlight && spotlightReport && (
+              <div className="spotlight-wrap">
+                <div className="spotlight-ribbon">신규 수익확인 완료</div>
+                <div className="spotlight">
+                  <div className="sp-left">
+                    <div className="sp-profile">
+                      <div className="sp-avatar">
+                        {spotlight.profileImage ? (
+                          <Image
+                            src={spotlight.profileImage}
+                            alt={spotlight.name}
+                            width={56}
+                            height={56}
+                            priority
+                          />
+                        ) : (
+                          <span>{spotlight.initial}</span>
+                        )}
+                      </div>
+                      <div className="sp-profile-meta">
+                        <div className="sp-name">{spotlight.name}</div>
+                        <div className="sp-tags">
+                          {spotlight.tags.map((tag) => (
+                            <span key={tag} className="sp-tag">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="sp-number-label">
+                      {spotlightReport.hero.cumulativeAdRevenue.label}
+                    </div>
+                    <div className="sp-number">
+                      {spotlightReport.hero.cumulativeAdRevenue.valueNumber}
+                      <span className="unit">
+                        {spotlightReport.hero.cumulativeAdRevenue.valueUnit}
+                      </span>
+                    </div>
+                    <div className="sp-number-sub">
+                      {spotlightReport.hero.cumulativeAdRevenue.sub}
+                    </div>
+
+                    <div className="sp-evidence">
+                      <div className="sp-ev-group-label">확인 근거</div>
+                      <div className="sp-ev-chips">
+                        {spotlightReport.hero.stats.taxDocs.map((doc) => (
+                          <span key={doc} className="sp-ev-chip">
+                            {doc}
+                          </span>
+                        ))}
+                        {spotlightReport.hero.stats.platformDocs.map((doc) => (
+                          <span key={doc} className="sp-ev-chip">
+                            {doc}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="sp-ctas">
+                      <Link
+                        href={`/reports/${spotlight.slug}`}
+                        className="sp-cta-primary"
+                      >
+                        확인 리포트 보기 →
+                      </Link>
+                    </div>
+                  </div>
+
+                  <div className="sp-right">
+                    <a
+                      href={spotlightReport.hero.videoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="sp-video"
+                    >
+                      <div className="sp-video-play"></div>
+                      <div className="sp-video-caption">
+                        <div className="t1">▶ 진위확인 영상 보기</div>
+                        <div className="t2">Proofit 검증</div>
+                      </div>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <section className="sec-verified">
+              <div className="sec-head">
+                <div className="sec-head-left">
+                  <div className="sec-label">수익확인 완료</div>
+                  <div className="sec-title">
+                    실제 수익이 확인된{' '}
+                    <span className="count">강사 {allPublished.length}명</span>
+                  </div>
+                  <div className="sec-sub">
+                    진위확인된 국세청 증빙으로 수익을 확인한 강사
+                  </div>
+                </div>
+              </div>
+
+              <div className="verified-grid">
+                {allPublished.map((inst) => {
+                  const supa = inst.supabaseId
+                    ? supabaseById.get(inst.supabaseId)
+                    : null
+                  const report = getReport(inst.slug)
+                  const heroNumber = report?.hero.cumulativeAdRevenue
+                  const priceValue = supa?.price_min ?? supa?.price_avg ?? null
+                  const price =
+                    priceValue !== null && priceValue > 0
+                      ? `${priceValue.toLocaleString('ko-KR')}원`
+                      : null
+
+                  return (
+                    <Link
+                      key={inst.slug}
+                      href={`/reports/${inst.slug}`}
+                      className="vc"
+                    >
+                      <div className="vc-top">
+                        <div className="vc-avatar">
+                          {inst.profileImage ? (
+                            <Image
+                              src={inst.profileImage}
+                              alt={inst.name}
+                              width={44}
+                              height={44}
+                            />
+                          ) : (
+                            <span>{inst.initial}</span>
+                          )}
+                        </div>
+                        <div className="vc-name-wrap">
+                          <div className="vc-name-row">
+                            <div className="vc-name">{inst.name}</div>
+                            <span className="vc-verified-badge">확인 완료</span>
+                          </div>
+                          <div className="vc-tags">
+                            {inst.tags.map((tag) => (
+                              <span key={tag} className="vc-tag">
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {heroNumber && (
+                        <div className="vc-number-wrap">
+                          <div className="vc-number-label">
+                            확인된 {heroNumber.label}
+                          </div>
+                          <div className="vc-number">
+                            {heroNumber.valueNumber}
+                            <span className="unit">{heroNumber.valueUnit}</span>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="vc-evidence">
+                        <span className="vc-ev-chip primary">국세청 증빙</span>
+                        {report?.hero.stats.platformDocs.map((doc) => (
+                          <span key={doc} className="vc-ev-chip">
+                            {doc} 정산서
+                          </span>
+                        ))}
+                      </div>
+
+                      <div className="vc-footer">
+                        <div className="vc-price">
+                          {price ? (
+                            <>
+                              강의료 <strong>{price}</strong>
+                            </>
+                          ) : (
+                            <>강의 정보 확인 중</>
+                          )}
+                        </div>
+                        <span className="vc-cta">리포트 보기</span>
+                      </div>
+                    </Link>
+                  )
+                })}
+
+                <div className="vc-placeholder">
+                  <div className="vc-placeholder-icon">+</div>
+                  <div className="vc-placeholder-title">
+                    다음 강사 검증 진행 중
+                  </div>
+                  <div className="vc-placeholder-desc">
+                    공인회계사 출신 팀이 강사들의 실제 수익을 검증하고 있습니다.
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          {/* 통계 — 기존 그대로 */}
           <div className="mt-10 flex gap-10 md:gap-16">
             <div>
               <p className="text-[2rem] md:text-[2.5rem] font-extrabold text-[#3182F6] tracking-tight tabular-nums leading-none">
