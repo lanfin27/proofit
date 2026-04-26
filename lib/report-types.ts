@@ -152,7 +152,6 @@ export type ReportAction = {
   title: string
   sub: string
   buttonLabel: string
-  buttonHref?: string
 }
 
 // Legal
