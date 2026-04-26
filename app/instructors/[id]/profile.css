@@ -1,0 +1,259 @@
+/*
+ * Profile page (v2) styles — verbatim from
+ * docs/proofit_profile_v2.html (lines 8~228), scoped under
+ * `.profile-page` so design tokens never leak into the rest of the
+ * site or collide with the report page.
+ *
+ * The v2 source ships its own `.topnav` markup; we don't render that
+ * in production (the site-wide <Header /> handles navigation) but the
+ * rules are kept verbatim so the file matches the design source.
+ */
+
+.profile-page {
+  --bg: #ffffff;
+  --bg-soft: #f2f4f6;
+  --bg-softer: #f9fafb;
+  --line: #f2f4f6;
+  --line-strong: #e5e8eb;
+
+  --ink: #191f28;
+  --ink-sub: #4e5968;
+  --ink-cap: #8b95a1;
+  --ink-muted: #b0b8c1;
+
+  --blue: #3182f6;
+  --blue-bg: #e8f3ff;
+  --blue-ink: #1b64da;
+
+  --radius: 12px;
+  --pad-x: 20px;
+
+  background: #fff;
+  color: var(--ink);
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  letter-spacing: -0.02em;
+}
+
+.profile-page *,
+.profile-page *::before,
+.profile-page *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.profile-page a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.profile-page .app {
+  max-width: 520px;
+  margin: 0 auto;
+  background: #fff;
+  min-height: 100vh;
+}
+
+/* TOP NAV — preserved for design parity; not rendered in production */
+.profile-page .topnav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px var(--pad-x);
+  border-bottom: 1px solid var(--line);
+  background: #fff;
+  position: sticky; top: 0; z-index: 10;
+}
+.profile-page .topnav .logo {
+  font-weight: 800; font-size: 20px;
+  letter-spacing: -0.04em;
+  color: var(--blue);
+}
+.profile-page .topnav .menu {
+  display: flex; gap: 18px; align-items: center;
+  font-size: 14px; color: var(--ink-sub); font-weight: 500;
+}
+.profile-page .topnav .menu .login { color: var(--ink-cap); font-weight: 500; }
+
+/* HERO */
+.profile-page .hero {
+  padding: 32px var(--pad-x) 36px;
+}
+
+/* No published report → no hero-number / report-cta below the badges.
+   The trailing margin on .badges and the bottom padding on .hero would
+   otherwise leave ~64px of empty space before the next section. The
+   following .sec already supplies its own padding-top: 40px, so we
+   only need a small visual gap here. */
+.profile-page .hero--no-report {
+  padding-bottom: 8px;
+}
+.profile-page .hero--no-report .badges {
+  margin-bottom: 0;
+}
+
+/* 프로필 헤드 */
+.profile-page .profile-head {
+  display: flex; align-items: center; gap: 14px;
+  margin-bottom: 18px;
+}
+.profile-page .profile-avatar {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  background: var(--bg-soft);
+  flex-shrink: 0;
+  overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; font-weight: 800; color: var(--ink-cap);
+  letter-spacing: -0.04em;
+}
+.profile-page .profile-avatar img {
+  width: 100%; height: 100%; object-fit: cover;
+}
+.profile-page .profile-meta { flex: 1; min-width: 0; }
+.profile-page .name-row {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+.profile-page .profile-name {
+  font-size: 26px; font-weight: 800; color: var(--ink);
+  letter-spacing: -0.045em; line-height: 1.15;
+}
+.profile-page .inline-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 9px;
+  background: var(--blue-bg); color: var(--blue);
+  border-radius: 6px;
+  font-size: 12px; font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1;
+}
+.profile-page .inline-badge::before {
+  content: '✓';
+  display: inline-flex;
+  width: 14px; height: 14px;
+  background: var(--blue); color: #fff;
+  border-radius: 50%;
+  align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 900;
+}
+.profile-page .profile-subject {
+  font-size: 13px; color: var(--ink-cap);
+  font-weight: 500;
+}
+
+/* 태그 */
+.profile-page .badges {
+  margin-bottom: 28px;
+  display: flex; gap: 6px; flex-wrap: wrap;
+}
+.profile-page .badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 5px 10px;
+  font-size: 12px; font-weight: 700;
+  letter-spacing: -0.01em;
+  border-radius: 6px;
+}
+.profile-page .badge.tag {
+  background: var(--bg-soft); color: var(--ink-sub); font-weight: 600;
+}
+
+/* Hero 큰 숫자 */
+.profile-page .hero-number { margin-bottom: 28px; }
+.profile-page .hero-number .label {
+  font-size: 13px; color: var(--ink-sub); font-weight: 600;
+  margin-bottom: 8px;
+}
+.profile-page .hero-number .value {
+  font-size: 44px; font-weight: 800; color: var(--ink);
+  letter-spacing: -0.05em; line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.profile-page .hero-number .value .unit {
+  font-size: 24px; color: var(--ink-sub); font-weight: 700;
+  margin-left: 2px;
+}
+.profile-page .hero-number .sub {
+  font-size: 13px; color: var(--ink-cap); font-weight: 500;
+  margin-top: 10px;
+}
+
+/* 리포트 진입 CTA */
+.profile-page .report-cta {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 20px;
+  background: var(--blue);
+  border-radius: var(--radius);
+  transition: background 0.15s;
+}
+.profile-page .report-cta:hover { background: var(--blue-ink); }
+.profile-page .report-cta .label {
+  font-size: 15px; font-weight: 800; color: #fff;
+  letter-spacing: -0.025em;
+}
+.profile-page .report-cta .arrow {
+  flex-shrink: 0;
+  font-size: 18px; color: #fff; font-weight: 800;
+}
+
+/* SECTION */
+.profile-page .sec { padding: 40px var(--pad-x); }
+.profile-page .sec h2 {
+  font-size: 19px; font-weight: 800; color: var(--ink);
+  letter-spacing: -0.035em;
+  margin-bottom: 6px;
+}
+.profile-page .sec .sec-sub {
+  font-size: 13px; color: var(--ink-cap); font-weight: 500;
+  margin-bottom: 20px;
+}
+
+/* 강의 카드 */
+.profile-page .course-list {
+  display: flex; flex-direction: column; gap: 8px;
+}
+.profile-page .course-item {
+  display: block;
+  padding: 18px 20px;
+  background: var(--bg-soft);
+  border-radius: var(--radius);
+  transition: background 0.15s;
+}
+.profile-page .course-item:hover { background: #e8ebee; }
+.profile-page .course-title {
+  font-size: 14px; font-weight: 700; color: var(--ink);
+  letter-spacing: -0.025em; line-height: 1.45;
+  margin-bottom: 8px;
+}
+.profile-page .course-foot {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px;
+}
+.profile-page .course-meta {
+  font-size: 12px; color: var(--ink-cap); font-weight: 500;
+}
+.profile-page .course-action {
+  display: flex; align-items: center; gap: 10px;
+  flex-shrink: 0;
+}
+.profile-page .course-price {
+  font-size: 14px; font-weight: 800; color: var(--ink);
+  letter-spacing: -0.025em;
+}
+.profile-page .course-link {
+  font-size: 12px; color: var(--blue); font-weight: 700;
+  white-space: nowrap;
+}
+
+/* FOOT */
+.profile-page .foot {
+  padding: 24px var(--pad-x) 40px;
+  border-top: 1px solid var(--line);
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 12px; flex-wrap: wrap;
+  font-size: 12px; color: var(--ink-cap);
+}
+.profile-page .foot .edit-link { color: var(--ink-sub); font-weight: 500; }
+.profile-page .foot .edit-link u { text-decoration: underline; }
