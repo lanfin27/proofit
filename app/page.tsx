@@ -1,4 +1,5 @@
 import { getInstructors, getStats } from '@/lib/data'
+import { isNewMainDesignEnabled } from '@/lib/feature-flags'
 import InstructorList from '@/components/InstructorList'
 import LandingCTA from '@/components/LandingCTA'
 import InstructorRequestTrigger from '@/components/InstructorRequestTrigger'
@@ -7,6 +8,8 @@ import FAQSection from '@/components/FAQSection'
 import GatedInstructorsLink from '@/components/GatedInstructorsLink'
 import LoginGateTrigger from '@/components/LoginGateTrigger'
 import LandingVerifiedStat from '@/components/LandingVerifiedStat'
+import MainPageV2 from '@/components/main/MainPageV2'
+import './main.css'
 
 interface LandingPageProps {
   searchParams?: { login?: string }
@@ -41,6 +44,10 @@ function formatPriceShort(value: number): string {
 }
 
 export default async function LandingPage({ searchParams }: LandingPageProps) {
+  if (isNewMainDesignEnabled()) {
+    return <MainPageV2 />
+  }
+
   const [instructors, stats] = await Promise.all([
     getInstructors({ sort: 'requests' }),
     getStats(),
