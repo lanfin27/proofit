@@ -30,6 +30,7 @@ export default function ProfilePageV2({ instructor, courses }: Props) {
   const isPublished = reportInstructor.status === 'published'
   const report = getReport(reportInstructor.slug)
   const heroNumber = isPublished ? report?.hero.cumulativeAdRevenue : null
+  const showReportShowcase = isPublished
 
   // This file is a server component and only reads scalar fields
   // (slug, name, status, profileImage, subject, tags) off
@@ -39,7 +40,7 @@ export default function ProfilePageV2({ instructor, courses }: Props) {
   return (
     <div className="profile-page">
       <div className="app">
-        <div className="hero">
+        <div className={`hero${showReportShowcase ? '' : ' hero--no-report'}`}>
           <div className="profile-head">
             <div className="profile-avatar">
               {reportInstructor.profileImage ? (

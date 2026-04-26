@@ -82,6 +82,18 @@
   padding: 32px var(--pad-x) 36px;
 }
 
+/* No published report → no hero-number / report-cta below the badges.
+   The trailing margin on .badges and the bottom padding on .hero would
+   otherwise leave ~64px of empty space before the next section. The
+   following .sec already supplies its own padding-top: 40px, so we
+   only need a small visual gap here. */
+.profile-page .hero--no-report {
+  padding-bottom: 8px;
+}
+.profile-page .hero--no-report .badges {
+  margin-bottom: 0;
+}
+
 /* 프로필 헤드 */
 .profile-page .profile-head {
   display: flex; align-items: center; gap: 14px;
