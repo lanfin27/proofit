@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client'
 import { useToast } from '@/components/Toast'
 import { sendGAEvent } from '@/lib/analytics'
@@ -24,6 +25,13 @@ export default function InstructorRequestModal({
   const [courseUrl, setCourseUrl] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState<{ name?: string; url?: string }>({})
+  // Tracks client-side mount so the portal target (document.body)
+  // is only accessed after hydration. Without this guard SSR would
+  // try to render into an element that does not exist server-side.
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -115,7 +123,7 @@ export default function InstructorRequestModal({
     onClose()
   }
 
-  if (!isOpen) return null
+  if (!isOpen || !mounted) return null
 
   const isFormInvalid =
     !!errors.name ||
@@ -123,7 +131,15 @@ export default function InstructorRequestModal({
     instructorName.trim().length < 2 ||
     !isSafeUrl(courseUrl.trim())
 
-  return (
+  // Render through a portal anchored to <body>. Without this, the
+  // modal sits inside whatever scoped wrapper its trigger lives under
+  // (e.g. .report-page on /reports/[slug]) and inherits that
+  // wrapper's global * { margin: 0; padding: 0 } reset, which strips
+  // every Tailwind p-* / mt-* class inside the modal and collapses
+  // the layout. Anchoring at document.body keeps the modal outside
+  // any page-scoped resets, so the same component renders correctly
+  // from every trigger surface.
+  return createPortal(
     <div
       className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"
       onClick={(e) => {
@@ -226,6 +242,7 @@ export default function InstructorRequestModal({
           </button>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
