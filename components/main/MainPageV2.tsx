@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { getInstructors } from '@/lib/data'
+import { getInstructors, getStats } from '@/lib/data'
 import {
   getAllPublishedReportInstructors,
   getRecentPublishedReportInstructors,
@@ -8,10 +8,11 @@ import {
 } from '@/lib/instructor-mapping'
 import { getReport } from '@/lib/report-data'
 import type { InstructorSummary } from '@/lib/types'
+import LoginGateTrigger from '@/components/LoginGateTrigger'
+import InstructorRequestTrigger from '@/components/InstructorRequestTrigger'
+import InstructorApplicationTrigger from '@/components/InstructorApplicationTrigger'
 import FAQSection from '@/components/FAQSection'
 import LandingCTA from '@/components/LandingCTA'
-import MainStudentCta from './MainStudentCta'
-import MainInstructorCta from './MainInstructorCta'
 
 const VIDEO_DURATION_FALLBACK = '1분 12초'
 
@@ -30,16 +31,55 @@ function formatPriceLabel(s: InstructorSummary): {
   return { label: '평균 강의료', value: formatPrice(s.price_avg) }
 }
 
+// Carried over verbatim from app/page.tsx so the legacy lower
+// sections render with the same visual rhythm they had before v2.
+function formatPriceShort(value: number): string {
+  if (value >= 10000) {
+    const man = value / 10000
+    return `${man % 1 === 0 ? man : man.toFixed(1)}만`
+  }
+  return `${value.toLocaleString('ko-KR')}`
+}
+
+function ValueCard({
+  metric,
+  title,
+  description,
+}: {
+  metric: string
+  title: string
+  description: string
+}) {
+  return (
+    <div>
+      <p className="text-[1.75rem] md:text-[2rem] font-extrabold text-[#3182F6] tracking-tight tabular-nums leading-none">
+        {metric}
+      </p>
+      <h3 className="mt-3 text-base font-semibold text-[#191F28]">{title}</h3>
+      <p className="mt-1 text-sm text-[#4E5968] leading-relaxed">{description}</p>
+    </div>
+  )
+}
+
+type Props = {
+  gateParam?: string | null
+}
+
 /**
  * v2 main landing page. Server component. Pulls Supabase instructor
  * rows + the report-side data file and merges them by supabaseId.
  *
  * privateSlug never crosses into client output: this file only reads
  * scalar fields off Instructor, and the only client components used
- * (MainStudentCta, MainInstructorCta) take no props.
+ * (LoginGateTrigger, InstructorRequestTrigger,
+ * InstructorApplicationTrigger, FAQSection, LandingCTA) take no
+ * Instructor object as a prop.
  */
-export default async function MainPageV2() {
-  const supabaseInstructors = await getInstructors({ sort: 'requests' })
+export default async function MainPageV2({ gateParam }: Props) {
+  const [supabaseInstructors, stats] = await Promise.all([
+    getInstructors({ sort: 'requests' }),
+    getStats(),
+  ])
 
   const recentPublished = getRecentPublishedReportInstructors(7)
   const allPublished = getAllPublishedReportInstructors()
@@ -54,306 +94,405 @@ export default async function MainPageV2() {
   const spotlight = recentPublished[0] ?? null
   const spotlightReport = spotlight ? getReport(spotlight.slug) : null
 
+  // Aggregates used by the legacy ValueCard / social-proof sections.
+  const totalPlatforms = new Set(
+    supabaseInstructors.flatMap((i) => i.platforms)
+  ).size
+  const allPrices = supabaseInstructors
+    .flatMap((i) => [i.price_min, i.price_max])
+    .filter((p): p is number => p !== null && p > 0)
+  const minPrice = allPrices.length > 0 ? Math.min(...allPrices) : null
+  const maxPrice = allPrices.length > 0 ? Math.max(...allPrices) : null
+
   return (
-    <div className="main-page">
-      <div className="container">
-        {/* HERO */}
-        <section className="hero">
-          <div className="hero-head">
-            <h1>
-              강사가 정말 그 돈을 벌었는지,
-              <br />
-              <span className="accent">Proofit이 직접 확인합니다.</span>
-            </h1>
-            <p className="lede">
-              진위확인된 국세청 증빙을 통해 확인된 수익만 공개합니다.
-            </p>
-          </div>
+    <>
+      <LoginGateTrigger gate={gateParam ?? null} />
 
-          {spotlight && spotlightReport && (
-            <div className="spotlight-wrap">
-              <div className="spotlight-ribbon">신규 수익확인 완료</div>
-              <div className="spotlight">
-                <div className="sp-left">
-                  <div className="sp-profile">
-                    <div className="sp-avatar">
-                      {spotlight.profileImage ? (
-                        <Image
-                          src={spotlight.profileImage}
-                          alt={spotlight.name}
-                          width={56}
-                          height={56}
-                          priority
-                        />
-                      ) : (
-                        <span>{spotlight.initial}</span>
-                      )}
-                    </div>
-                    <div className="sp-profile-meta">
-                      <div className="sp-name">{spotlight.name}</div>
-                      <div className="sp-tags">
-                        {spotlight.tags.map((tag) => (
-                          <span key={tag} className="sp-tag">
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="sp-number-label">
-                    {spotlightReport.hero.cumulativeAdRevenue.label}
-                  </div>
-                  <div className="sp-number">
-                    {spotlightReport.hero.cumulativeAdRevenue.valueNumber}
-                    <span className="unit">
-                      {spotlightReport.hero.cumulativeAdRevenue.valueUnit}
-                    </span>
-                  </div>
-                  <div className="sp-number-sub">
-                    {spotlightReport.hero.cumulativeAdRevenue.sub}
-                  </div>
-
-                  <div className="sp-evidence">
-                    <div className="sp-ev-group-label">확인 근거</div>
-                    <div className="sp-ev-chips">
-                      {spotlightReport.hero.stats.taxDocs.map((doc) => (
-                        <span key={doc} className="sp-ev-chip">
-                          {doc}
-                        </span>
-                      ))}
-                      {spotlightReport.hero.stats.platformDocs.map((doc) => (
-                        <span key={doc} className="sp-ev-chip">
-                          {doc}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="sp-ctas">
-                    <Link
-                      href={`/reports/${spotlight.slug}`}
-                      className="sp-cta-primary"
-                    >
-                      확인 리포트 보기 →
-                    </Link>
-                  </div>
-                </div>
-
-                <div className="sp-right">
-                  <a
-                    href={spotlightReport.hero.videoUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="sp-video"
-                  >
-                    <div className="sp-video-play"></div>
-                    <div className="sp-video-caption">
-                      <div className="t1">▶ 진위확인 영상 보기</div>
-                      <div className="t2">
-                        {spotlightReport.hero.videoDurationLabel ??
-                          VIDEO_DURATION_FALLBACK}{' '}
-                        · Proofit 검증
-                      </div>
-                    </div>
-                  </a>
-                </div>
-              </div>
-            </div>
-          )}
-        </section>
-
-        {/* 수익확인 완료 */}
-        <section className="sec-verified">
-          <div className="sec-head">
-            <div className="sec-head-left">
-              <div className="sec-label">수익확인 완료</div>
-              <div className="sec-title">
-                실제 수익이 확인된{' '}
-                <span className="count">강사 {allPublished.length}명</span>
-              </div>
-              <div className="sec-sub">
-                진위확인된 국세청 증빙으로 수익을 확인한 강사
-              </div>
-            </div>
-          </div>
-
-          <div className="verified-grid">
-            {allPublished.map((inst) => {
-              const supa = inst.supabaseId
-                ? supabaseById.get(inst.supabaseId)
-                : null
-              const report = getReport(inst.slug)
-              const heroNumber = report?.hero.cumulativeAdRevenue
-              const price = supa
-                ? formatPrice(supa.price_min ?? supa.price_avg)
-                : null
-
-              return (
-                <Link
-                  key={inst.slug}
-                  href={`/reports/${inst.slug}`}
-                  className="vc"
-                >
-                  <div className="vc-top">
-                    <div className="vc-avatar">
-                      {inst.profileImage ? (
-                        <Image
-                          src={inst.profileImage}
-                          alt={inst.name}
-                          width={44}
-                          height={44}
-                        />
-                      ) : (
-                        <span>{inst.initial}</span>
-                      )}
-                    </div>
-                    <div className="vc-name-wrap">
-                      <div className="vc-name-row">
-                        <div className="vc-name">{inst.name}</div>
-                        <span className="vc-verified-badge">확인 완료</span>
-                      </div>
-                      <div className="vc-tags">
-                        {inst.tags.map((tag) => (
-                          <span key={tag} className="vc-tag">
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  {heroNumber && (
-                    <div className="vc-number-wrap">
-                      <div className="vc-number-label">
-                        확인된 {heroNumber.label}
-                      </div>
-                      <div className="vc-number">
-                        {heroNumber.valueNumber}
-                        <span className="unit">{heroNumber.valueUnit}</span>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="vc-evidence">
-                    <span className="vc-ev-chip primary">국세청 증빙</span>
-                    {report?.hero.stats.platformDocs.map((doc) => (
-                      <span key={doc} className="vc-ev-chip">
-                        {doc} 정산서
-                      </span>
-                    ))}
-                  </div>
-
-                  <div className="vc-footer">
-                    <div className="vc-price">
-                      {price ? (
-                        <>
-                          강의료 <strong>{price}</strong>
-                        </>
-                      ) : (
-                        <>강의 정보 확인 중</>
-                      )}
-                    </div>
-                    <span className="vc-cta">리포트 보기</span>
-                  </div>
-                </Link>
-              )
-            })}
-
-            <div className="vc-placeholder">
-              <div className="vc-placeholder-icon">+</div>
-              <div className="vc-placeholder-title">
-                다음 강사 검증 진행 중
-              </div>
-              <div className="vc-placeholder-desc">
-                공인회계사 출신 팀이 강사들의 실제 수익을 검증하고 있습니다.
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* 확인 요청 대기 */}
-        {waitingInstructors.length > 0 && (
-          <section className="sec-waiting">
-            <div className="sec-head">
-              <div className="sec-head-left">
-                <div className="sec-title">확인 요청 대기 중</div>
-                <div className="sec-sub">
-                  학생들이 수익확인을 요청하고 있는 강사
-                </div>
-              </div>
+      <div className="main-page">
+        <div className="container">
+          {/* HERO */}
+          <section className="hero">
+            <div className="hero-head">
+              <h1>
+                강사가 정말 그 돈을 벌었는지,
+                <br />
+                <span className="accent">Proofit이 직접 확인합니다.</span>
+              </h1>
+              <p className="lede">
+                진위확인된 국세청 증빙을 통해 확인된 수익만 공개합니다.
+              </p>
             </div>
 
-            <div className="waiting-grid">
-              {waitingInstructors.map((s) => {
-                const price = formatPriceLabel(s)
-                const courseLabel =
-                  s.course_count > 0 ? ` · ${s.course_count}개 강의` : ''
-                const platformText =
-                  s.platforms.length > 0 ? s.platforms[0] : '플랫폼 정보 없음'
-                return (
-                  <Link
-                    key={s.id}
-                    href={`/instructors/${s.id}`}
-                    className="wc"
-                  >
-                    <div className="wc-top">
-                      <div className="wc-info">
-                        <div className="wc-name">{s.display_name}</div>
-                        {s.categories.length > 0 && (
-                          <div className="wc-tags">
-                            {s.categories.slice(0, 3).map((cat) => (
-                              <span key={cat} className="wc-tag">
-                                {cat}
-                              </span>
-                            ))}
-                          </div>
+            {spotlight && spotlightReport && (
+              <div className="spotlight-wrap">
+                <div className="spotlight-ribbon">신규 수익확인 완료</div>
+                <div className="spotlight">
+                  <div className="sp-left">
+                    <div className="sp-profile">
+                      <div className="sp-avatar">
+                        {spotlight.profileImage ? (
+                          <Image
+                            src={spotlight.profileImage}
+                            alt={spotlight.name}
+                            width={56}
+                            height={56}
+                            priority
+                          />
+                        ) : (
+                          <span>{spotlight.initial}</span>
                         )}
-                        <div className="wc-meta">
-                          {platformText}
-                          {courseLabel}
+                      </div>
+                      <div className="sp-profile-meta">
+                        <div className="sp-name">{spotlight.name}</div>
+                        <div className="sp-tags">
+                          {spotlight.tags.map((tag) => (
+                            <span key={tag} className="sp-tag">
+                              {tag}
+                            </span>
+                          ))}
                         </div>
                       </div>
                     </div>
-                    <div className="wc-bottom">
-                      <div className="wc-bottom-left">
-                        <div className="wc-price-label">{price.label}</div>
-                        <div className="wc-price">{price.value ?? '—'}</div>
+
+                    <div className="sp-number-label">
+                      {spotlightReport.hero.cumulativeAdRevenue.label}
+                    </div>
+                    <div className="sp-number">
+                      {spotlightReport.hero.cumulativeAdRevenue.valueNumber}
+                      <span className="unit">
+                        {spotlightReport.hero.cumulativeAdRevenue.valueUnit}
+                      </span>
+                    </div>
+                    <div className="sp-number-sub">
+                      {spotlightReport.hero.cumulativeAdRevenue.sub}
+                    </div>
+
+                    <div className="sp-evidence">
+                      <div className="sp-ev-group-label">확인 근거</div>
+                      <div className="sp-ev-chips">
+                        {spotlightReport.hero.stats.taxDocs.map((doc) => (
+                          <span key={doc} className="sp-ev-chip">
+                            {doc}
+                          </span>
+                        ))}
+                        {spotlightReport.hero.stats.platformDocs.map((doc) => (
+                          <span key={doc} className="sp-ev-chip">
+                            {doc}
+                          </span>
+                        ))}
                       </div>
-                      {s.verification_count > 0 && (
-                        <span className="wc-request">
-                          <span className="count">
-                            {s.verification_count}명
-                          </span>{' '}
-                          확인 요청 중
+                    </div>
+
+                    <div className="sp-ctas">
+                      <Link
+                        href={`/reports/${spotlight.slug}`}
+                        className="sp-cta-primary"
+                      >
+                        확인 리포트 보기 →
+                      </Link>
+                    </div>
+                  </div>
+
+                  <div className="sp-right">
+                    <a
+                      href={spotlightReport.hero.videoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="sp-video"
+                    >
+                      <div className="sp-video-play"></div>
+                      <div className="sp-video-caption">
+                        <div className="t1">▶ 진위확인 영상 보기</div>
+                        <div className="t2">
+                          {spotlightReport.hero.videoDurationLabel ??
+                            VIDEO_DURATION_FALLBACK}{' '}
+                          · Proofit 검증
+                        </div>
+                      </div>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            )}
+          </section>
+
+          {/* 수익확인 완료 */}
+          <section className="sec-verified">
+            <div className="sec-head">
+              <div className="sec-head-left">
+                <div className="sec-label">수익확인 완료</div>
+                <div className="sec-title">
+                  실제 수익이 확인된{' '}
+                  <span className="count">강사 {allPublished.length}명</span>
+                </div>
+                <div className="sec-sub">
+                  진위확인된 국세청 증빙으로 수익을 확인한 강사
+                </div>
+              </div>
+            </div>
+
+            <div className="verified-grid">
+              {allPublished.map((inst) => {
+                const supa = inst.supabaseId
+                  ? supabaseById.get(inst.supabaseId)
+                  : null
+                const report = getReport(inst.slug)
+                const heroNumber = report?.hero.cumulativeAdRevenue
+                const price = supa
+                  ? formatPrice(supa.price_min ?? supa.price_avg)
+                  : null
+
+                return (
+                  <Link
+                    key={inst.slug}
+                    href={`/reports/${inst.slug}`}
+                    className="vc"
+                  >
+                    <div className="vc-top">
+                      <div className="vc-avatar">
+                        {inst.profileImage ? (
+                          <Image
+                            src={inst.profileImage}
+                            alt={inst.name}
+                            width={44}
+                            height={44}
+                          />
+                        ) : (
+                          <span>{inst.initial}</span>
+                        )}
+                      </div>
+                      <div className="vc-name-wrap">
+                        <div className="vc-name-row">
+                          <div className="vc-name">{inst.name}</div>
+                          <span className="vc-verified-badge">확인 완료</span>
+                        </div>
+                        <div className="vc-tags">
+                          {inst.tags.map((tag) => (
+                            <span key={tag} className="vc-tag">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {heroNumber && (
+                      <div className="vc-number-wrap">
+                        <div className="vc-number-label">
+                          확인된 {heroNumber.label}
+                        </div>
+                        <div className="vc-number">
+                          {heroNumber.valueNumber}
+                          <span className="unit">{heroNumber.valueUnit}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="vc-evidence">
+                      <span className="vc-ev-chip primary">국세청 증빙</span>
+                      {report?.hero.stats.platformDocs.map((doc) => (
+                        <span key={doc} className="vc-ev-chip">
+                          {doc} 정산서
                         </span>
-                      )}
+                      ))}
+                    </div>
+
+                    <div className="vc-footer">
+                      <div className="vc-price">
+                        {price ? (
+                          <>
+                            강의료 <strong>{price}</strong>
+                          </>
+                        ) : (
+                          <>강의 정보 확인 중</>
+                        )}
+                      </div>
+                      <span className="vc-cta">리포트 보기</span>
                     </div>
                   </Link>
                 )
               })}
+
+              <div className="vc-placeholder">
+                <div className="vc-placeholder-icon">+</div>
+                <div className="vc-placeholder-title">
+                  다음 강사 검증 진행 중
+                </div>
+                <div className="vc-placeholder-desc">
+                  공인회계사 출신 팀이 강사들의 실제 수익을 검증하고 있습니다.
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* 확인 요청 대기 */}
+          {waitingInstructors.length > 0 && (
+            <section className="sec-waiting">
+              <div className="sec-head">
+                <div className="sec-head-left">
+                  <div className="sec-title">확인 요청 대기 중</div>
+                  <div className="sec-sub">
+                    학생들이 수익확인을 요청하고 있는 강사
+                  </div>
+                </div>
+              </div>
+
+              <div className="waiting-grid">
+                {waitingInstructors.map((s) => {
+                  const price = formatPriceLabel(s)
+                  const courseLabel =
+                    s.course_count > 0 ? ` · ${s.course_count}개 강의` : ''
+                  const platformText =
+                    s.platforms.length > 0
+                      ? s.platforms[0]
+                      : '플랫폼 정보 없음'
+                  return (
+                    <Link
+                      key={s.id}
+                      href={`/instructors/${s.id}`}
+                      className="wc"
+                    >
+                      <div className="wc-top">
+                        <div className="wc-info">
+                          <div className="wc-name">{s.display_name}</div>
+                          {s.categories.length > 0 && (
+                            <div className="wc-tags">
+                              {s.categories.slice(0, 3).map((cat) => (
+                                <span key={cat} className="wc-tag">
+                                  {cat}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          <div className="wc-meta">
+                            {platformText}
+                            {courseLabel}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="wc-bottom">
+                        <div className="wc-bottom-left">
+                          <div className="wc-price-label">{price.label}</div>
+                          <div className="wc-price">{price.value ?? '—'}</div>
+                        </div>
+                        {s.verification_count > 0 && (
+                          <span className="wc-request">
+                            <span className="count">
+                              {s.verification_count}명
+                            </span>{' '}
+                            확인 요청 중
+                          </span>
+                        )}
+                      </div>
+                    </Link>
+                  )
+                })}
+              </div>
+            </section>
+          )}
+        </div>
+
+        {/* ---- Below this line: legacy sections carried over verbatim
+             from app/page.tsx so their visual tone (gray bg, blue bg,
+             dark hero, FAQ) stays exactly as it was before v2. ---- */}
+
+        {/* InstructorRequestTrigger — student-side "강사 요청하기" link */}
+        <section className="pb-10 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-6xl mx-auto">
+            <InstructorRequestTrigger />
+          </div>
+        </section>
+
+        {/* 왜 Proofit인가 — 숫자 강조 */}
+        <section className="bg-[#F2F4F6] py-10 md:py-14 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
+            <ValueCard
+              metric={totalPlatforms > 0 ? `${totalPlatforms}개` : '여러'}
+              title="플랫폼 강의를 한 곳에"
+              description="클래스101, 크몽, 유튜브, 탈잉의 강의를 통합했습니다."
+            />
+            <ValueCard
+              metric={
+                minPrice && maxPrice
+                  ? `${formatPriceShort(minPrice)}~${formatPriceShort(maxPrice)}`
+                  : '비교'
+              }
+              title="강의료를 한눈에 비교"
+              description="같은 분야 강사의 강의료를 나란히 비교할 수 있습니다."
+            />
+            <ValueCard
+              metric="강사수익확인"
+              title="공인회계사가 직접 확인"
+              description="M&A 재무실사 방법론으로 강사의 실제 수익을 확인합니다."
+            />
+          </div>
+        </section>
+
+        {/* 사회적 증거 (10건 이상) */}
+        {stats.requestCount >= 10 && (
+          <section className="py-8 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-6xl mx-auto text-center">
+              <p className="text-base text-[#4E5968]">
+                지금까지{' '}
+                <span className="font-bold text-[#3182F6]">
+                  {stats.requestCount.toLocaleString('ko-KR')}명
+                </span>
+                의 수강생이 강사의 수익확인을 요청했습니다
+              </p>
             </div>
           </section>
         )}
 
-        <MainStudentCta />
+        {/* 후킹 + 신뢰 — 다크 배경 */}
+        <section className="bg-[#3182F6] py-20 md:py-28 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-3xl mx-auto text-center">
+            <h2 className="text-2xl md:text-[2.25rem] lg:text-[2.75rem] font-extrabold text-white leading-[1.25] tracking-[-0.02em]">
+              아직도 수익 확인 안된
+              <br />
+              강사의 고가강의에
+              <br className="md:hidden" />
+              {' '}
+              돈을 쓰고 계신가요?
+            </h2>
+            <p className="mt-5 text-base md:text-lg text-white/70 leading-relaxed">
+              공인회계사 출신 팀이 강사의 실제 수익을
+              <br className="hidden md:block" />
+              {' '}
+              공식 서류로 직접 확인합니다.
+            </p>
+          </div>
+        </section>
 
-        <div className="faq-wrap">
-          <h2 className="faq-wrap-title">자주 묻는 질문</h2>
-          <FAQSection />
-        </div>
+        {/* 강사 신청 배너 */}
+        <section className="py-10 md:py-12 px-4 sm:px-6 lg:px-8 border-t border-[#E5E8EB]">
+          <div className="max-w-3xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-5">
+            <div>
+              <p className="text-base md:text-lg font-bold text-[#191F28]">
+                진짜 강사라면 수익을 증명하세요
+              </p>
+              <p className="text-sm text-[#8B95A1] mt-1">
+                현재 무료로 수익확인을 진행하고 있습니다.
+              </p>
+            </div>
+            <InstructorApplicationTrigger />
+          </div>
+        </section>
 
-        <MainInstructorCta />
+        {/* FAQ */}
+        <section className="py-16 md:py-20 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-3xl mx-auto">
+            <h2 className="text-xl md:text-2xl font-extrabold text-[#191F28] text-center">
+              자주 묻는 질문
+            </h2>
+            <div className="mt-8">
+              <FAQSection />
+            </div>
+          </div>
+        </section>
 
-        <div className="footer">
-          <strong>Proofit.</strong> 공인회계사팀이 수행하는 업무상 참고
-          분석입니다. 공인회계사법상 인증업무가 아니며 법적 효력이 없습니다.
-          <br />
-          proofit.co.kr
-        </div>
+        {/* 모바일 하단 고정 바 */}
+        <LandingCTA />
       </div>
-
-      <LandingCTA />
-    </div>
+    </>
   )
 }

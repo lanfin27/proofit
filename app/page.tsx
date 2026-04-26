@@ -44,8 +44,10 @@ function formatPriceShort(value: number): string {
 }
 
 export default async function LandingPage({ searchParams }: LandingPageProps) {
+  const gateParam = searchParams?.login ?? null
+
   if (isNewMainDesignEnabled()) {
-    return <MainPageV2 />
+    return <MainPageV2 gateParam={gateParam} />
   }
 
   const [instructors, stats] = await Promise.all([
@@ -65,8 +67,6 @@ export default async function LandingPage({ searchParams }: LandingPageProps) {
     .filter((p): p is number => p !== null && p > 0)
   const minPrice = allPrices.length > 0 ? Math.min(...allPrices) : null
   const maxPrice = allPrices.length > 0 ? Math.max(...allPrices) : null
-
-  const gateParam = searchParams?.login ?? null
 
   return (
     <div>
