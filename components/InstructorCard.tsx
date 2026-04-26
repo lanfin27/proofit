@@ -53,12 +53,9 @@ export default function InstructorCard({
   // 랜딩(로그인 게이트 컨텍스트)에서 비로그인이면 수익확인 뱃지를 블러 처리
   const hideVerification = requireLoginOnClick && !isLoggedIn
 
-  // 수익확인 강사: 연파랑 배경 / 일반: 연회색 배경
-  const cardBg = isVerified
-    ? 'bg-[#E8F3FF] hover:bg-[#D4E8FF]'
-    : 'bg-[#F2F4F6] hover:bg-[#E5E8EB]'
-
-  const cardClass = `block ${cardBg} rounded-2xl p-5 transition-colors duration-150`
+  // 모든 카드 동일 회색 배경 — verified 여부는 카드 우상단 "확인" 뱃지로만 구분
+  const cardClass =
+    'block bg-[#F2F4F6] hover:bg-[#E5E8EB] rounded-2xl p-5 transition-colors duration-150'
 
   const handleClick = (e: React.MouseEvent) => {
     sendGAEvent('instructor_card_click', {
