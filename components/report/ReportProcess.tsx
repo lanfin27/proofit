@@ -22,11 +22,10 @@ export default function ReportProcess({ steps }: Props) {
                   className="video-link"
                   href={step.videoLink.url}
                   target="_blank"
-                  rel="noopener"
+                  rel="noopener noreferrer"
                 >
                   <span className="play-icon"></span>
                   {step.videoLink.label}
-                  <span className="meta">{step.videoLink.meta}</span>
                 </a>
               )}
             </div>

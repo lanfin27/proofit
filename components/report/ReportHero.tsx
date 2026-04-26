@@ -35,14 +35,12 @@ export default function ReportHero({ instructor, hero }: Props) {
         className="hero-video"
         href={hero.videoUrl}
         target="_blank"
-        rel="noopener"
+        rel="noopener noreferrer"
       >
         <div className="play"></div>
         <div className="body">
           <div className="title">진위확인 영상</div>
-          <div className="desc">
-            국세청 홈택스 실시간 조회 · {hero.videoDurationLabel}
-          </div>
+          <div className="desc">국세청증빙 홈택스 진위확인</div>
         </div>
         <div className="arrow">→</div>
       </a>
