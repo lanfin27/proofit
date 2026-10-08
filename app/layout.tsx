@@ -1,6 +1,10 @@
 import type { Metadata } from 'next'
 import { GoogleAnalytics } from '@next/third-parties/google'
 import './globals.css'
+import Header from '@/components/Header'
+import Footer from '@/components/Footer'
+import { ToastProvider } from '@/components/Toast'
+import { LoginModalProvider } from '@/components/LoginModalProvider'
 
 export const metadata: Metadata = {
   title: 'Proofit | 이 강사, 진짜 돈 벌어본 사람일까?',
@@ -37,7 +41,13 @@ export default function RootLayout({
         />
       </head>
       <body className="font-sans antialiased flex flex-col min-h-screen">
-        <main className="flex-1">{children}</main>
+        <ToastProvider>
+          <LoginModalProvider>
+            <Header />
+            <main className="flex-1">{children}</main>
+            <Footer />
+          </LoginModalProvider>
+        </ToastProvider>
       </body>
       {process.env.NEXT_PUBLIC_GA_ID && (
         <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
