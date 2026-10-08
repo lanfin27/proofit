@@ -58,6 +58,9 @@ export default function Footer() {
         <p className="text-xs text-[#B0B8C1] mt-6">
           © 2026 Proofit. All rights reserved.
         </p>
+        <p className="text-xs text-[#B0B8C1] mt-1">
+          상호: 로브 <span className="mx-1">|</span> 사업자등록번호: 501-41-28483
+        </p>
       </div>
     </footer>
   )
